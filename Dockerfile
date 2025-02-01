@@ -1,6 +1,7 @@
-FROM apache/airflow:2.7.3-python3.8
+FROM apache/airflow:latest
 
-USER root
+USER airflow
+
 RUN pip install --no-cache-dir psycopg2-binary
 
 USER airflow
