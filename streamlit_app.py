@@ -1,38 +1,18 @@
 import streamlit as st
 import pandas as pd
-import psycopg2
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 
-# Database connection function - caches the connection to prevent repeated calls
-@st.cache_resource
-def get_connection():
-    return psycopg2.connect(
-        dbname="airflow",
-        user="airflow",
-        password="airflow",
-        host="postgres",
-        port="5432"
-    )
-
-# Load data from PostgreSQL - caches data for efficiency
+# Load data from JSON file - caches data for efficiency
 @st.cache_data
 def load_data():
-    conn = get_connection()
-    query = """
-        SELECT
-            id, description, status, created_at, updated_at, acknowledged_at, closed_at,
-            lat, lng, vote_count, comment_count, rating, summary, request_type_title, assignee_name,
-            CASE
-                WHEN summary ILIKE '%homeless%'
-                    OR summary ILIKE '%someone%living%on%%' THEN 'homeless-related'
-                ELSE 'other issues'
-            END AS homeless_related
-        FROM seeclickfix_issues
-    """
-    df = pd.read_sql(query, conn)  # Load data from SQL query into a DataFrame
-    conn.close()  # Close the connection after fetching data
+    df = pd.read_json("exports/seeclickfix_issues_dump.json")
+    df['created_at'] = pd.to_datetime(df['created_at'])
+    df['updated_at'] = pd.to_datetime(df['updated_at'])
+    df['acknowledged_at'] = pd.to_datetime(df['acknowledged_at'])
+    df['closed_at'] = pd.to_datetime(df['closed_at'])
+    df['homeless_related'] = df['summary'].str.contains("homeless|someone living on", case=False, na=False).map({True: 'homeless-related', False: 'other issues'})
     return df
 
 # Streamlit UI setup
@@ -44,8 +24,8 @@ df = load_data()
 
 # Add date filter slider
 st.subheader("Filter by Date")
-min_date, max_date = pd.to_datetime(df['created_at']).min(), pd.to_datetime(df['created_at']).max()
-date_range = st.slider("Select Date Range", min_value=min_date.to_pydatetime(), max_value=max_date.to_pydatetime(), value=(min_date.to_pydatetime(), max_date.to_pydatetime()))
+min_date, max_date = df['created_at'].min().to_pydatetime(), df['created_at'].max().to_pydatetime()
+date_range = st.slider("Select Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
 filtered_df = df[(df['created_at'] >= date_range[0]) & (df['created_at'] <= date_range[1])]
 
 # Arrange filters in columns
@@ -55,7 +35,6 @@ with col1:
     st.subheader("Filter by Homeless-Related Issues")
     homeless_toggle = st.toggle("Show only homeless-related issues", value=False)
 
-# Apply the filter if the toggle is enabled
 if homeless_toggle:
     filtered_df = filtered_df[filtered_df['homeless_related'] == 'homeless-related']
 
@@ -161,3 +140,21 @@ fig_chronic = px.scatter_mapbox(chronic_issues_top, lat='lat_round', lon='lng_ro
                                 mapbox_style='open-street-map', zoom=10,
                                 title="Top 10% Quarter-Mile Grouped Chronic Issue Locations")
 st.plotly_chart(fig_chronic)
+
+# Compute resolution time
+filtered_df['resolved_at'] = filtered_df[['acknowledged_at', 'closed_at']].min(axis=1)
+filtered_df['time_to_resolution'] = (filtered_df['resolved_at'] - filtered_df['created_at']).dt.days
+
+# Scatter plot visualization
+st.subheader("Issue Resolution Time by Assignee")
+st.markdown("Each point represents an assignee, showing the total number of issues assigned to them and the average time taken to acknowledge or close the issue.")
+assignee_stats = filtered_df.groupby('assignee_name').agg(
+    num_issues=('id', 'count'),
+    avg_time_to_resolution=('time_to_resolution', 'mean')
+).reset_index()
+fig_scatter = px.scatter(
+    assignee_stats, x='num_issues', y='avg_time_to_resolution',
+    hover_data=['assignee_name'], labels={'num_issues': 'Number of Issues', 'avg_time_to_resolution': 'Avg Time to Resolution (days)'},
+    title='Resolution Time vs. Number of Issues by Assignee'
+)
+st.plotly_chart(fig_scatter)
