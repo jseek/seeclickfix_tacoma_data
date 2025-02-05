@@ -4,6 +4,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 
+# Set page config to use wide layout
+st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
+
 # Load data from JSON file - caches data for efficiency
 @st.cache_data
 def load_data():
@@ -17,40 +20,39 @@ def load_data():
 
 # Streamlit UI setup
 st.title("Tacoma 311 Issues Dashboard")
-st.markdown("📊 Interactive analysis of reported issues in Tacoma.")
 
 # Load data
 df = load_data()
 
-# Add date filter slider
-st.subheader("Filter by Date")
-min_date, max_date = df['created_at'].min().to_pydatetime(), df['created_at'].max().to_pydatetime()
-date_range = st.slider("Select Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
-filtered_df = df[(df['created_at'] >= date_range[0]) & (df['created_at'] <= date_range[1])]
-
-# Arrange filters in columns
-col1, col2 = st.columns(2)
+col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.subheader("Filter by Homeless-Related Issues")
+    st.subheader("Created Date")
+    min_date, max_date = df['created_at'].min().to_pydatetime(), df['created_at'].max().to_pydatetime()
+    date_range = st.slider("Select Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
+
+    st.markdown("Issue Type")
+    summary_options = df['summary'].unique().tolist()
+    with st.expander("Expand to select issue types"):
+        selected_summaries = st.multiselect("Select Summaries", summary_options, default=summary_options)
     homeless_toggle = st.toggle("Show only homeless-related issues", value=False)
+
+# Apply filters
+filtered_df = df[(df['created_at'] >= date_range[0]) & (df['created_at'] <= date_range[1])]
 
 if homeless_toggle:
     filtered_df = filtered_df[filtered_df['homeless_related'] == 'homeless-related']
 
-with col2:
-    st.subheader("Filter by Issue Type")
-    st.markdown("Expand the section below to select issue types.")
-    summary_options = df['summary'].unique().tolist()
-    with st.expander("Expand to select issue types"):
-        selected_summaries = st.multiselect("Select Summaries", summary_options, default=summary_options)
-    filtered_df = filtered_df[filtered_df['summary'].isin(selected_summaries)]
+filtered_df = filtered_df[filtered_df['summary'].isin(selected_summaries)]
 
-# Display issue summary statistics
-st.subheader("311 Issue Summary")
-st.write(f"Total Issues: **{len(filtered_df)}**")
-st.write(f"Open Issues: **{len(filtered_df[filtered_df['status'] != 'Closed'])}**")
-st.write(f"Closed Issues: **{len(filtered_df[filtered_df['status'] == 'Closed'])}**")
+with col2:
+    st.write(f"**Issue Summary:**  Total Issues: **{len(filtered_df)}** | Open Issues: **{len(filtered_df[filtered_df['status'] != 'Closed'])}** | Closed Issues: **{len(filtered_df[filtered_df['status'] == 'Closed'])}**")
+
+    st.subheader("Issues Over Time (Weekly)")
+    st.markdown("Number of issues created each week")
+    filtered_df['week'] = filtered_df['created_at'].dt.to_period('W').apply(lambda r: r.start_time)  # Convert to week start date
+    time_series = filtered_df.groupby(filtered_df['week']).count()['id']  # Count issues per week
+    st.line_chart(time_series)
 
 # Compute aging analysis
 st.subheader("Aging Analysis")
@@ -72,36 +74,36 @@ aging_summary = aging_summary.sort_values(by='issue_count', ascending=False)
 
 st.dataframe(aging_summary)
 
-# Time series visualization of issues over time
-st.subheader("Issues Over Time (Weekly)")
-st.markdown("Number of issues created each week")
-filtered_df['week'] = filtered_df['created_at'].dt.to_period('W').apply(lambda r: r.start_time)  # Convert to week start date
-time_series = filtered_df.groupby(filtered_df['week']).count()['id']  # Count issues per week
-st.line_chart(time_series)
 
-# Display issue locations on a map
-st.subheader("Issue Locations")
-st.markdown("Maps the geographical distribution of issues. Hover over the dot for details on the issue.")
-fig = px.scatter_mapbox(filtered_df, lat="lat", lon="lng", hover_data=["description", "status"],
-                         mapbox_style="open-street-map", zoom=10)
-st.plotly_chart(fig)
+map_col1, map_col2 = st.columns([1, 1])
 
-# Heatmap of issue density
-st.subheader("Issue Heatmap")
-st.markdown("Highlights areas with a high concentration of reported issues.")
-fig_heatmap = go.Figure(go.Densitymapbox(
-    lat=filtered_df['lat'],
-    lon=filtered_df['lng'],
-    z=[1] * len(filtered_df),  # Each point contributes equally
-    radius=10,  # Adjust radius for heat intensity
-    colorscale="Viridis"
-))
-fig_heatmap.update_layout(
-    mapbox_style="open-street-map",
-    mapbox_center={"lat": filtered_df['lat'].mean(), "lon": filtered_df['lng'].mean()},
-    mapbox_zoom=10
-)
-st.plotly_chart(fig_heatmap)
+with map_col1:
+    # Display issue locations on a map
+    st.subheader("Issue Locations")
+    st.markdown("Maps the geographical distribution of issues. Hover over the dot for details on the issue.")
+    fig = px.scatter_mapbox(filtered_df, lat="lat", lon="lng", hover_data=["description", "status"],
+                            mapbox_style="open-street-map", zoom=10)
+    st.plotly_chart(fig)
+
+with map_col2:
+    # Heatmap of issue density
+    st.subheader("Issue Heatmap")
+    st.markdown("Highlights areas with a high concentration of reported issues.")
+    fig_heatmap = go.Figure(go.Densitymapbox(
+        lat=filtered_df['lat'],
+        lon=filtered_df['lng'],
+        z=[1] * len(filtered_df),  # Each point contributes equally
+        radius=10,  # Adjust radius for heat intensity
+        colorscale="Viridis"
+    ))
+    fig_heatmap.update_layout(
+        mapbox_style="open-street-map",
+        mapbox_center={"lat": filtered_df['lat'].mean(), "lon": filtered_df['lng'].mean()},
+        mapbox_zoom=10
+    )
+    st.plotly_chart(fig_heatmap)
+
+
 
 # Horizontal bar chart for issue summary counts
 st.subheader("Issues by Type")
