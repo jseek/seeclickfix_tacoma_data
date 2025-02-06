@@ -54,6 +54,8 @@ with col2:
     time_series = filtered_df.groupby(filtered_df['week']).count()['id']  # Count issues per week
     st.line_chart(time_series)
 
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
 # Compute aging analysis
 st.subheader("Aging Analysis")
 st.markdown("For issues that have not been closed, shows the median time to acknowledge an issue, the count of acknowledged issues, and the percentage of issues that have been acknowledged, grouped by the kind of issue.")
@@ -74,6 +76,8 @@ aging_summary = aging_summary.sort_values(by='issue_count', ascending=False)
 
 st.dataframe(aging_summary)
 
+## Location Analysis section
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 map_col1, map_col2 = st.columns([1, 1])
 
@@ -104,6 +108,7 @@ with map_col2:
     st.plotly_chart(fig_heatmap)
 
 
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 # Horizontal bar chart for issue summary counts
 st.subheader("Issues by Type")
@@ -117,6 +122,7 @@ st.plotly_chart(fig_bar)
 filtered_df['resolved_at'] = filtered_df[['acknowledged_at', 'closed_at']].min(axis=1)
 filtered_df['time_to_resolution'] = (filtered_df['resolved_at'] - filtered_df['created_at']).dt.days
 
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 st.subheader("Issue Resolution Time by Assignee")
 st.markdown("Each point represents an assignee, showing the total number of issues assigned to them and the average time taken to acknowledge or close the issue.")
@@ -131,6 +137,7 @@ fig_scatter = px.scatter(
 )
 st.plotly_chart(fig_scatter)
 
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 # Compute assignee performance statistics
 filtered_df['time_to_acknowledge'] = (filtered_df['acknowledged_at'] - filtered_df['created_at']).dt.days
@@ -168,6 +175,8 @@ assignee_stats = assignee_stats.sort_values(by='total_issues', ascending=False)
 # Display results
 st.subheader("Assignee Performance Summary")
 st.dataframe(assignee_stats)
+
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 # Display a filterable table of issue data
 st.subheader("Issue Data Table")
