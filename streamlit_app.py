@@ -87,12 +87,13 @@ st.dataframe(aging_summary)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 map_col1, map_col2 = st.columns([1, 1])
+issue_mapping_df = filtered_df
 
 with map_col1:
     # Display issue locations on a map
     st.subheader("Issue Locations")
     st.markdown("Maps the geographical distribution of issues. Hover over the dot for details on the issue.")
-    fig = px.scatter_mapbox(filtered_df, lat="lat", lon="lng", hover_data=["description", "status"],
+    fig = px.scatter_mapbox(issue_mapping_df, lat="lat", lon="lng", hover_data=["description", "status"],
                             mapbox_style="open-street-map", zoom=10)
     st.plotly_chart(fig)
 
@@ -101,15 +102,15 @@ with map_col2:
     st.subheader("Issue Heatmap")
     st.markdown("Highlights areas with a high concentration of reported issues.")
     fig_heatmap = go.Figure(go.Densitymapbox(
-        lat=filtered_df['lat'],
-        lon=filtered_df['lng'],
-        z=[1] * len(filtered_df),  # Each point contributes equally
+        lat=issue_mapping_df['lat'],
+        lon=issue_mapping_df['lng'],
+        z=[1] * len(issue_mapping_df),  # Each point contributes equally
         radius=10,  # Adjust radius for heat intensity
         colorscale="Viridis"
     ))
     fig_heatmap.update_layout(
         mapbox_style="open-street-map",
-        mapbox_center={"lat": filtered_df['lat'].mean(), "lon": filtered_df['lng'].mean()},
+        mapbox_center={"lat": issue_mapping_df['lat'].mean(), "lon": issue_mapping_df['lng'].mean()},
         mapbox_zoom=10
     )
     st.plotly_chart(fig_heatmap)
