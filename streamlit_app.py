@@ -113,41 +113,11 @@ fig_bar = px.bar(summary_counts, x=summary_counts.values, y=summary_counts.index
                  orientation='h', labels={'x': 'Count', 'y': 'Request Type'})
 st.plotly_chart(fig_bar)
 
-# Pie chart for categorizing issues as homeless-related or other
-st.subheader("Homeless-Related Issues")
-homeless_counts = filtered_df['homeless_related'].value_counts()
-fig_pie = px.pie(names=homeless_counts.index, values=homeless_counts.values, 
-                 title="Proportion of Homeless-Related Issues")
-st.plotly_chart(fig_pie)
-
-# Display a filterable table of issue data
-st.subheader("Issue Data Table")
-st.markdown("Details on each issue.")
-st.dataframe(filtered_df)
-
-# Chronic Issue Areas (Grouped by Quarter Mile - Top 10%)
-st.subheader("Chronic Issue Areas")
-st.markdown("Groups repeated reports into quarter-mile areas and highlights the top 10% most reported locations.")
-
-def group_issues_by_quarter_mile(filtered_df, resolution=0.004):
-    filtered_df['lat_round'] = (filtered_df['lat'] / resolution).round() * resolution
-    filtered_df['lng_round'] = (filtered_df['lng'] / resolution).round() * resolution
-    grouped_df = filtered_df.groupby(['lat_round', 'lng_round']).size().reset_index(name='count')
-    return grouped_df
-
-chronic_issues = group_issues_by_quarter_mile(filtered_df)
-threshold = chronic_issues['count'].quantile(0.90)  # Top 10% cutoff
-chronic_issues_top = chronic_issues[chronic_issues['count'] >= threshold]
-fig_chronic = px.scatter_mapbox(chronic_issues_top, lat='lat_round', lon='lng_round', size='count',
-                                mapbox_style='open-street-map', zoom=10,
-                                title="Top 10% Quarter-Mile Grouped Chronic Issue Locations")
-st.plotly_chart(fig_chronic)
-
 # Compute resolution time
 filtered_df['resolved_at'] = filtered_df[['acknowledged_at', 'closed_at']].min(axis=1)
 filtered_df['time_to_resolution'] = (filtered_df['resolved_at'] - filtered_df['created_at']).dt.days
 
-# Scatter plot visualization
+
 st.subheader("Issue Resolution Time by Assignee")
 st.markdown("Each point represents an assignee, showing the total number of issues assigned to them and the average time taken to acknowledge or close the issue.")
 assignee_stats = filtered_df.groupby('assignee_name').agg(
@@ -160,3 +130,46 @@ fig_scatter = px.scatter(
     title='Resolution Time vs. Number of Issues by Assignee'
 )
 st.plotly_chart(fig_scatter)
+
+
+# Compute assignee performance statistics
+filtered_df['time_to_acknowledge'] = (filtered_df['acknowledged_at'] - filtered_df['created_at']).dt.days
+filtered_df['time_to_close'] = (filtered_df['closed_at'] - filtered_df['created_at']).dt.days
+
+# Aggregate issue counts and response times per assignee
+assignee_stats = filtered_df.groupby('assignee_name').agg(
+    total_issues=('id', 'count'),
+    acknowledged_issues=('acknowledged_at', 'count'),
+    closed_issues=('closed_at', 'count'),
+    avg_time_to_acknowledge=('time_to_acknowledge', 'mean'),
+    avg_time_to_close=('time_to_close', 'mean')
+).reset_index()
+
+# Compute acknowledgment and closure rates
+assignee_stats['acknowledgment_rate'] = (assignee_stats['acknowledged_issues'] / assignee_stats['total_issues']) * 100
+assignee_stats['closure_rate'] = (assignee_stats['closed_issues'] / assignee_stats['total_issues']) * 100
+
+# Determine the top summary per assignee based on issue count
+top_summary = (
+    filtered_df.groupby(['assignee_name', 'summary'])
+    .size()
+    .reset_index(name='summary_count')
+    .sort_values(['assignee_name', 'summary_count'], ascending=[True, False])
+    .drop_duplicates(subset=['assignee_name'], keep='first')
+    .rename(columns={'summary': 'top_issue_type'})
+)
+
+# Merge the top summary back into assignee_stats
+assignee_stats = assignee_stats.merge(top_summary[['assignee_name', 'top_issue_type']], on='assignee_name', how='left')
+
+# Sort the final DataFrame by issue count in descending order
+assignee_stats = assignee_stats.sort_values(by='total_issues', ascending=False)
+
+# Display results
+st.subheader("Assignee Performance Summary")
+st.dataframe(assignee_stats)
+
+# Display a filterable table of issue data
+st.subheader("Issue Data Table")
+st.markdown("Details on each issue.")
+st.dataframe(filtered_df)
