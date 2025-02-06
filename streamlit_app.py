@@ -27,9 +27,8 @@ df = load_data()
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.subheader("Created Date")
     min_date, max_date = df['created_at'].min().to_pydatetime(), df['created_at'].max().to_pydatetime()
-    date_range = st.slider("Select Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
+    date_range = st.slider("Select Issue Created Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
 
     st.markdown("Issue Type")
     summary_options = df['summary'].unique().tolist()
