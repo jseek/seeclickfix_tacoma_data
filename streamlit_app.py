@@ -15,7 +15,13 @@ def load_data():
     df['updated_at'] = pd.to_datetime(df['updated_at'])
     df['acknowledged_at'] = pd.to_datetime(df['acknowledged_at'])
     df['closed_at'] = pd.to_datetime(df['closed_at'])
-    df['homeless_related'] = df['summary'].str.contains("homeless|someone living on", case=False, na=False).map({True: 'homeless-related', False: 'other issues'})
+    
+    df['homeless_related'] = df['summary'].str.contains("homeless|someone living on", case=False, na=False) | \
+                            df['description'].str.contains("homeless", case=False, na=False)
+
+    df['homeless_related'] = df['homeless_related'].map({True: 'homeless-related', False: 'other issues'})
+
+
     return df
 
 # Streamlit UI setup
@@ -30,8 +36,10 @@ with col1:
     min_date, max_date = df['created_at'].min().to_pydatetime(), df['created_at'].max().to_pydatetime()
     date_range = st.slider("Select Issue Created Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
 
+
     st.markdown("Issue Type")
     summary_options = df['summary'].unique().tolist()
+
     with st.expander("Expand to select issue types"):
         selected_summaries = st.multiselect("Select Summaries", summary_options, default=summary_options)
     homeless_toggle = st.toggle("Show only homeless-related issues", value=False)
