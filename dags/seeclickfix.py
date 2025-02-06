@@ -26,8 +26,8 @@ PER_PAGE = 20  # SeeClickFix api limits records with details to 20
 SLEEP_SECONDS = (60/20) # Time to wait between loops. SCF api limits to 20 requests every 60 seconds
 
 # Default updated_at timestamp
-DEFAULT_UPDATED_AT = "2024-01-01T00:00:00Z"
-CREATED_AT_AFTER = "2024-01-01T00:00:00Z"
+DEFAULT_UPDATED_AT = "2010-01-01T00:00:00Z"
+CREATED_AT_AFTER = "2020-01-01T00:00:00Z"
 
 def get_updated_at():
     """Retrieve last updated timestamp from Airflow Variables."""
@@ -45,7 +45,7 @@ def fetch_data(**kwargs):
     session.mount("https://", HTTPAdapter(max_retries=retries))
 
     while True:
-        url = f"{BASE_URL}?place_url={PLACE_URL}&details=true&after={CREATED_AT_AFTER}&sort=updated_at&sort_direction=ASC&page={page}&per_page={PER_PAGE}&updated_at_after={updated_at}"
+        url = f"{BASE_URL}?place_url={PLACE_URL}&details=true&status=open,acknowledged,closed,archived&after={CREATED_AT_AFTER}&sort=updated_at&sort_direction=ASC&page={page}&per_page={PER_PAGE}&updated_at_after={updated_at}"
 
         logging.info(f"Fetching data from: {url}")
         response = session.get(url)
