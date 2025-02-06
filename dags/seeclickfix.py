@@ -27,7 +27,7 @@ SLEEP_SECONDS = (60/20) # Time to wait between loops. SCF api limits to 20 reque
 
 # Default updated_at timestamp
 DEFAULT_UPDATED_AT = "2010-01-01T00:00:00Z"
-CREATED_AT_AFTER = "2020-01-01T00:00:00Z"
+CREATED_AT_AFTER = "2024-01-01T00:00:00Z"
 
 def get_updated_at():
     """Retrieve last updated timestamp from Airflow Variables."""
@@ -210,7 +210,7 @@ dag = DAG(
     "seeclickfix_tacoma_dag",
     default_args=default_args,
     description="Fetch and store SeeClickFix data for Tacoma",
-    schedule_interval=timedelta(hours=1),
+    schedule_interval=timedelta(hours=6),
     catchup=False,
 )
 
