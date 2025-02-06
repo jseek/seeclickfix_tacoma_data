@@ -16,11 +16,11 @@ DB_CONN_PARAMS = {
 OUTPUT_FILE_PATH = "/opt/airflow/exports/seeclickfix_issues_dump.json"
 
 def export_to_json():
-    """Fetch all records from seeclickfix_issues and save as JSON."""
+    """Fetch all records from seeclickfix_issues, sort by ID, and save as JSON."""
     conn = psycopg2.connect(**DB_CONN_PARAMS)
     cursor = conn.cursor()
 
-    query = "SELECT * FROM seeclickfix_issues"
+    query = "SELECT * FROM seeclickfix_issues ORDER BY id"
     cursor.execute(query)
     
     columns = [desc[0] for desc in cursor.description]
