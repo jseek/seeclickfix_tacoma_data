@@ -24,7 +24,7 @@ def load_data():
     df['homeless_related'] = df['homeless_related'].map({True: 'homeless-related', False: 'other issues'})
 
     # Create formatted district display
-    df['district_display'] = df['councilmember'].fillna("Unknown") + " - " + df['councilmember_webpage'].fillna("No Webpage")
+    df['district_display'] = df['council_distinct'].fillna(0).astype(int).astype(str) + " - " + df['councilmember'].fillna("Unknown")
     
     return df
 
