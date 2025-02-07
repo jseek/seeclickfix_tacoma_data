@@ -3,6 +3,7 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
 import psycopg2
 import json
+import pandas as pd
 from shapely.geometry import shape, Point
 
 # Database connection parameters
@@ -15,7 +16,7 @@ DB_CONN_PARAMS = {
 }
 
 # File paths
-OUTPUT_FILE_PATH = "/opt/airflow/exports/seeclickfix_issues_dump.json"
+OUTPUT_FILE_PATH = "/opt/airflow/exports/seeclickfix_issues_dump.parquet"
 GEOJSON_FILE_PATH = "/opt/airflow/exports/City_Council_Districts.geojson"
 
 def load_geojson():
@@ -26,7 +27,7 @@ def load_geojson():
     districts = []
     for feature in data["features"]:
         district = {
-            "geometry": shape(feature["geometry"]),  # Convert geometry to a Shapely polygon
+            "geometry": shape(feature["geometry"]),
             "councilmember": feature["properties"].get("councilmember"),
             "councilmember_email": feature["properties"].get("councilmember_email"),
             "councilmember_photo": feature["properties"].get("councilmember_photo"),
@@ -57,8 +58,8 @@ def assign_council_data(issue, districts):
             })
             break  # Stop searching once a match is found
 
-def export_to_json():
-    """Fetch all records from seeclickfix_issues, enrich with council data, and save as JSON."""
+def export_to_parquet():
+    """Fetch all records from seeclickfix_issues, enrich with council data, and save as Parquet."""
     # Connect to the database
     conn = psycopg2.connect(**DB_CONN_PARAMS)
     cursor = conn.cursor()
@@ -80,9 +81,9 @@ def export_to_json():
         if "lat" in issue and "lng" in issue:
             assign_council_data(issue, districts)
 
-    # Save enriched data to JSON
-    with open(OUTPUT_FILE_PATH, "w", encoding="utf-8") as f:
-        json.dump(records, f, indent=4, ensure_ascii=False, default=str)
+    # Convert to DataFrame and save as Parquet
+    df = pd.DataFrame(records)
+    df.to_parquet(OUTPUT_FILE_PATH, engine='pyarrow', index=False)
 
 default_args = {
     "owner": "airflow",
@@ -95,14 +96,14 @@ default_args = {
 dag = DAG(
     "export_seeclickfix_issues",
     default_args=default_args,
-    description="Export seeclickfix_issues table to JSON after enriching with council district data.",
+    description="Export seeclickfix_issues table to Parquet after enriching with council district data.",
     schedule_interval="@hourly",
     catchup=False,
 )
 
 export_task = PythonOperator(
-    task_id="export_to_json",
-    python_callable=export_to_json,
+    task_id="export_to_parquet",
+    python_callable=export_to_parquet,
     dag=dag,
 )
 

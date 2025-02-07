@@ -3,16 +3,14 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-import json
 
 # Set page config to use wide layout
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
 
-# Load data from JSON file - caches data for efficiency
+# Load data from Parquet file - caches data for efficiency
 @st.cache_data
-
 def load_data():
-    df = pd.read_json("exports/seeclickfix_issues_dump.json")
+    df = pd.read_parquet("exports/seeclickfix_issues_dump.parquet")
     df['created_at'] = pd.to_datetime(df['created_at'])
     df['updated_at'] = pd.to_datetime(df['updated_at'])
     df['acknowledged_at'] = pd.to_datetime(df['acknowledged_at'])
