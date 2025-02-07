@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import json
 
 # Set page config to use wide layout
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
@@ -31,11 +32,35 @@ def load_data():
     
     return df
 
-# Streamlit UI setup
-st.title("Tacoma 311 Issues Dashboard")
+# Load equity population data from GeoJSON
+@st.cache_data
+def load_equity_population():
+    with open("exports/Equity_Index_2024_(Tacoma).geojson", "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    equity_population_df = pd.DataFrame([
+        {
+            "equity_objectid": feature["properties"].get("object_id"),
+            "population": feature["properties"].get("population", 0)  # Default to 0 if missing
+        }
+        for feature in data["features"]
+    ])
+    
+    return equity_population_df
 
 # Load data
 df = load_data()
+equity_population_df = load_equity_population()
+
+# Convert equity_objectid in both DataFrames to string for proper merging
+df['equity_objectid'] = df['equity_objectid'].astype(str)
+equity_population_df['equity_objectid'] = equity_population_df['equity_objectid'].astype(str)
+
+# Calculate total population across all areas
+total_population = equity_population_df["population"].sum()
+
+# UI Layout
+st.title("Tacoma 311 Issues Dashboard")
 
 col1, col2 = st.columns([1, 2])
 
@@ -93,6 +118,7 @@ if shelter_toggle:
     filtered_df = filtered_df[filtered_df['within_10_blocks_of_shelter'] == True]
 
 with col2:
+    st.write(f"Population: **{total_population:,}**")
     st.write(f"**Issue Summary:**  Total Issues: **{len(filtered_df)}** | Open Issues: **{len(filtered_df[filtered_df['status'] != 'Closed'])}** | Closed Issues: **{len(filtered_df[filtered_df['status'] == 'Closed'])}**")
 
     st.subheader("Issues Over Time (Weekly)")
