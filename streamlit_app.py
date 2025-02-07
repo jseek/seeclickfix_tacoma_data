@@ -4,7 +4,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 import json
-from shapely.geometry import shape, Point
 
 # Set page config to use wide layout
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
