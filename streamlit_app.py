@@ -205,7 +205,7 @@ st.dataframe(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 # Compute the median days to acknowledge or close (whichever comes first)
-filtered_df['median_days_to_resolve'] = (filtered_df[['closed_at', 'closed_at']].min(axis=1) - filtered_df['created_at']).dt.days
+filtered_df['median_days_to_resolve'] = (filtered_df[['acknowledged_at', 'closed_at']].min(axis=1) - filtered_df['created_at']).dt.days
 
 # Aggregate data by council district
 district_agg = filtered_df.groupby('district_display').agg(
