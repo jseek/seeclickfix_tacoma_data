@@ -23,7 +23,9 @@ def load_data():
 
     df['homeless_related'] = df['homeless_related'].map({True: 'homeless-related', False: 'other issues'})
 
-
+    # Create formatted district display
+    df['district_display'] = df['councilmember'].fillna("Unknown") + " - " + df['councilmember_webpage'].fillna("No Webpage")
+    
     return df
 
 # Streamlit UI setup
@@ -38,6 +40,10 @@ with col1:
     min_date, max_date = df['created_at'].min().to_pydatetime(), df['created_at'].max().to_pydatetime()
     date_range = st.slider("Select Issue Created Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
 
+    # District filter
+    st.markdown("Filter by District")
+    district_options = ["All"] + sorted(df['district_display'].dropna().unique().tolist())
+    selected_district = st.selectbox("Select a District", district_options)
 
     st.markdown("Issue Type")
     summary_options = df['summary'].unique().tolist()
@@ -48,6 +54,9 @@ with col1:
 
 # Apply filters
 filtered_df = df[(df['created_at'] >= date_range[0]) & (df['created_at'] <= date_range[1])]
+
+if selected_district != "All":
+    filtered_df = filtered_df[filtered_df['district_display'] == selected_district]
 
 if homeless_toggle:
     filtered_df = filtered_df[filtered_df['homeless_related'] == 'homeless-related']
