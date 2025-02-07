@@ -92,6 +92,7 @@ def export_to_parquet():
         "averagepavementcondition": "averagepavementcondition",
         "householdvehicleaccess": "householdvehicleaccess",
         "parksopenspace": "parksopenspace",
+        "equity_objectid": "objectid",  # Added object_id
     })
     
     police_districts = load_geojson(POLICE_GEOJSON_PATH, {
@@ -113,7 +114,8 @@ def export_to_parquet():
             ])
             assign_attributes(issue, equity_index, [
                 "equityindex", "livabilityindex", "accessibilityindex", "economicindex", "educationindex",
-                "environmentalindex", "averagepavementcondition", "householdvehicleaccess", "parksopenspace"
+                "environmentalindex", "averagepavementcondition", "householdvehicleaccess", "parksopenspace",
+                "equity_objectid"
             ])
             assign_attributes(issue, police_districts, ["police_sector", "police_district"])
             assign_shelter_proximity(issue, shelters)

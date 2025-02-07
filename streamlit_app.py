@@ -40,7 +40,7 @@ def load_equity_population():
 
     equity_population_df = pd.DataFrame([
         {
-            "equity_objectid": feature["properties"].get("object_id"),
+            "equity_objectid": feature["properties"].get("objectid"),
             "population": feature["properties"].get("population", 0)  # Default to 0 if missing
         }
         for feature in data["features"]
@@ -53,8 +53,6 @@ df = load_data()
 equity_population_df = load_equity_population()
 
 # Convert equity_objectid in both DataFrames to string for proper merging
-df['equity_objectid'] = df['equity_objectid'].astype(str)
-equity_population_df['equity_objectid'] = equity_population_df['equity_objectid'].astype(str)
 
 # Calculate total population across all areas
 total_population = equity_population_df["population"].sum()
@@ -283,6 +281,40 @@ fig_scatter.update_traces(textposition='top center')
 # Display plot in Streamlit
 st.subheader("Issue Volume vs. Resolution Time by District")
 st.plotly_chart(fig_scatter)
+
+
+
+
+
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Group issues by equity ID
+issues_by_equity = filtered_df.groupby("equity_objectid")["id"].count().reset_index()
+issues_by_equity.columns = ["equity_objectid", "issue_count"]
+
+# Sum population by equity ID
+population_by_equity = equity_population_df.groupby("equity_objectid")["population"].sum().reset_index()
+
+# Merge issue counts and population data
+equity_issues_population = pd.merge(issues_by_equity, population_by_equity, on="equity_objectid", how="outer").fillna(0)
+
+# Display data
+st.subheader("Issues and Population by Equity ID")
+
+# Create scatter plot
+fig = px.scatter(
+    equity_issues_population,
+    x="population",
+    y="issue_count",
+    text="equity_objectid",
+    labels={"population": "Population", "issue_count": "Number of Issues"},
+    title="Issues vs. Population by Equity ID"
+)
+fig.update_traces(textposition="top center")
+st.plotly_chart(fig)
+
+
+
 
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
