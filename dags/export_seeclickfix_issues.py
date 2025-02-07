@@ -17,49 +17,33 @@ DB_CONN_PARAMS = {
 
 # File paths
 OUTPUT_FILE_PATH = "/opt/airflow/exports/seeclickfix_issues_dump.parquet"
-GEOJSON_FILE_PATH = "/opt/airflow/exports/City_Council_Districts.geojson"
+COUNCIL_GEOJSON_PATH = "/opt/airflow/exports/City_Council_Districts.geojson"
+EQUITY_GEOJSON_PATH = "/opt/airflow/exports/Equity_Index_2024_(Tacoma).geojson"
 
-def load_geojson():
-    """Load the City Council Districts geojson file and parse polygons."""
-    with open(GEOJSON_FILE_PATH, "r", encoding="utf-8") as f:
+def load_geojson(file_path, attribute_mapping):
+    """Load a GeoJSON file and parse polygons with associated attributes."""
+    with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     
-    districts = []
+    features = []
     for feature in data["features"]:
-        district = {
-            "geometry": shape(feature["geometry"]),
-            "councilmember": feature["properties"].get("councilmember"),
-            "councilmember_email": feature["properties"].get("councilmember_email"),
-            "councilmember_photo": feature["properties"].get("councilmember_photo"),
-            "council_distinct": feature["properties"].get("dist_id"),
-            "councilmember_phonenumber": feature["properties"].get("phonenumber"),
-            "councilmember_supportstaff": feature["properties"].get("supportstaff"),
-            "councilmember_supportstaff_email": feature["properties"].get("supportstaff_email"),
-            "councilmember_webpage": feature["properties"].get("webpage"),
-        }
-        districts.append(district)
+        feature_data = {"geometry": shape(feature["geometry"])}
+        feature_data.update({key: feature["properties"].get(value) for key, value in attribute_mapping.items()})
+        features.append(feature_data)
     
-    return districts
+    return features
 
-def assign_council_data(issue, districts):
-    """Assign council district data to an issue based on its lat/lng."""
-    point = Point(issue["lng"], issue["lat"])  # Create a Shapely Point
-    for district in districts:
-        if district["geometry"].contains(point):
-            issue.update({
-                "councilmember": district["councilmember"],
-                "councilmember_email": district["councilmember_email"],
-                "councilmember_photo": district["councilmember_photo"],
-                "councilmember_phonenumber": district["councilmember_phonenumber"],
-                "councilmember_supportstaff": district["councilmember_supportstaff"],
-                "councilmember_supportstaff_email": district["councilmember_supportstaff_email"],
-                "councilmember_webpage": district["councilmember_webpage"],
-                "council_distinct": district["council_distinct"],
-            })
+def assign_attributes(issue, features, attribute_keys):
+    """Assign attributes from the closest matching feature based on lat/lng."""
+    point = Point(issue["lng"], issue["lat"])
+    for feature in features:
+        if feature["geometry"].contains(point):
+            for key in attribute_keys:
+                issue[key] = feature.get(key, None)
             break  # Stop searching once a match is found
 
 def export_to_parquet():
-    """Fetch all records from seeclickfix_issues, enrich with council data, and save as Parquet."""
+    """Fetch all records from seeclickfix_issues, enrich with council and equity index data, and save as Parquet."""
     # Connect to the database
     conn = psycopg2.connect(**DB_CONN_PARAMS)
     cursor = conn.cursor()
@@ -74,12 +58,42 @@ def export_to_parquet():
     conn.close()
 
     # Load council district polygons
-    districts = load_geojson()
+    council_districts = load_geojson(COUNCIL_GEOJSON_PATH, {
+        "councilmember": "councilmember",
+        "councilmember_email": "councilmember_email",
+        "councilmember_photo": "councilmember_photo",
+        "council_distinct": "dist_id",
+        "councilmember_phonenumber": "phonenumber",
+        "councilmember_supportstaff": "supportstaff",
+        "councilmember_supportstaff_email": "supportstaff_email",
+        "councilmember_webpage": "webpage",
+    })
 
-    # Assign councilmember data to each issue
+    # Load equity index polygons
+    equity_index = load_geojson(EQUITY_GEOJSON_PATH, {
+        "equityindex": "equityindex",
+        "livabilityindex": "livabilityindex",
+        "accessibilityindex": "accessibilityindex",
+        "economicindex": "economicindex",
+        "educationindex": "educationindex",
+        "environmentalindex": "environmentalindex",
+        "averagepavementcondition": "averagepavementcondition",
+        "householdvehicleaccess": "householdvehicleaccess",
+        "parksopenspace": "parksopenspace",
+    })
+
+    # Assign council and equity data to each issue
     for issue in records:
         if "lat" in issue and "lng" in issue:
-            assign_council_data(issue, districts)
+            assign_attributes(issue, council_districts, [
+                "councilmember", "councilmember_email", "councilmember_photo", "council_distinct",
+                "councilmember_phonenumber", "councilmember_supportstaff", "councilmember_supportstaff_email",
+                "councilmember_webpage"
+            ])
+            assign_attributes(issue, equity_index, [
+                "equityindex", "livabilityindex", "accessibilityindex", "economicindex", "educationindex",
+                "environmentalindex", "averagepavementcondition", "householdvehicleaccess", "parksopenspace"
+            ])
 
     # Convert to DataFrame and save as Parquet
     df = pd.DataFrame(records)
@@ -96,7 +110,7 @@ default_args = {
 dag = DAG(
     "export_seeclickfix_issues",
     default_args=default_args,
-    description="Export seeclickfix_issues table to Parquet after enriching with council district data.",
+    description="Export seeclickfix_issues table to Parquet after enriching with council and equity index data.",
     schedule_interval="@hourly",
     catchup=False,
 )

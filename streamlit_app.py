@@ -39,9 +39,12 @@ with col1:
     date_range = st.slider("Select Issue Created Date Range", min_value=min_date, max_value=max_date, value=(min_date, max_date))
 
     # District filter
-    st.markdown("Filter by District")
     district_options = ["All"] + sorted(df['district_display'].dropna().unique().tolist())
-    selected_district = st.selectbox("Select a District", district_options)
+    selected_district = st.selectbox("Filter by District", district_options)
+
+    # Equity Index filter
+    equity_index_options = ["All"] + sorted(df['equityindex'].dropna().unique().tolist())
+    selected_equity_index = st.selectbox("Filter by Equity Index", equity_index_options)
 
     st.markdown("Issue Type")
     summary_options = df['summary'].unique().tolist()
@@ -55,6 +58,9 @@ filtered_df = df[(df['created_at'] >= date_range[0]) & (df['created_at'] <= date
 
 if selected_district != "All":
     filtered_df = filtered_df[filtered_df['district_display'] == selected_district]
+
+if selected_equity_index != "All":
+    filtered_df = filtered_df[filtered_df['equityindex'] == selected_equity_index]
 
 if homeless_toggle:
     filtered_df = filtered_df[filtered_df['homeless_related'] == 'homeless-related']
