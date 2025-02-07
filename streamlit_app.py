@@ -204,6 +204,32 @@ st.dataframe(filtered_df)
 
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
+# Compute the median days to acknowledge or close (whichever comes first)
+filtered_df['median_days_to_resolve'] = (filtered_df[['closed_at', 'closed_at']].min(axis=1) - filtered_df['created_at']).dt.days
+
+# Aggregate data by council district
+district_agg = filtered_df.groupby('district_display').agg(
+    issue_count=('id', 'count'),
+    median_days_to_resolve=('median_days_to_resolve', 'median')
+).reset_index()
+
+# Create scatter plot
+fig_scatter = px.scatter(
+    district_agg, 
+    x='median_days_to_resolve', 
+    y='issue_count',
+    text='district_display',
+    labels={'median_days_to_resolve': 'Median Days to Acknowledge/Close', 'issue_count': 'Number of Issues'},
+    title='Number of Issues vs. Median Days to Acknowledge/Close by Council District'
+)
+
+fig_scatter.update_traces(textposition='top center')
+
+# Display plot in Streamlit
+st.subheader("Issue Volume vs. Resolution Time by District")
+st.plotly_chart(fig_scatter)
+
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
 st.markdown(
     """
