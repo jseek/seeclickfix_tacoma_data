@@ -20,6 +20,7 @@ OUTPUT_FILE_PATH = "/opt/airflow/exports/seeclickfix_issues_dump.parquet"
 COUNCIL_GEOJSON_PATH = "/opt/airflow/exports/City_Council_Districts.geojson"
 EQUITY_GEOJSON_PATH = "/opt/airflow/exports/Equity_Index_2024_(Tacoma).geojson"
 POLICE_GEOJSON_PATH = "/opt/airflow/exports/Police_Districts_(Tacoma).geojson"
+SHELTER_GEOJSON_PATH = "/opt/airflow/exports/Estimated10BlockDistancefromShelterView_-7990954508892049150.geojson"
 
 def load_geojson(file_path, attribute_mapping):
     """Load a GeoJSON file and parse polygons with associated attributes."""
@@ -43,8 +44,19 @@ def assign_attributes(issue, features, attribute_keys):
                 issue[key] = feature.get(key, None)
             break  # Stop searching once a match is found
 
+def assign_shelter_proximity(issue, shelters):
+    """Assign nearby shelter name and mark if within 10 blocks of any shelter."""
+    point = Point(issue["lng"], issue["lat"])
+    for shelter in shelters:
+        if shelter["geometry"].contains(point):
+            issue["nearby_shelter_name"] = shelter.get("shelter_name", "Unknown")
+            issue["within_10_blocks_of_shelter"] = True
+            return
+    issue["nearby_shelter_name"] = None
+    issue["within_10_blocks_of_shelter"] = False
+
 def export_to_parquet():
-    """Fetch all records from seeclickfix_issues, enrich with council, equity index, and police district data, and save as Parquet."""
+    """Fetch all records from seeclickfix_issues, enrich with spatial data, and save as Parquet."""
     # Connect to the database
     conn = psycopg2.connect(**DB_CONN_PARAMS)
     cursor = conn.cursor()
@@ -86,6 +98,10 @@ def export_to_parquet():
         "police_sector": "sector",
         "police_district": "district"
     })
+
+    shelters = load_geojson(SHELTER_GEOJSON_PATH, {
+        "shelter_name": "Shelter_Name"
+    })
     
     # Assign attributes
     for issue in records:
@@ -100,6 +116,7 @@ def export_to_parquet():
                 "environmentalindex", "averagepavementcondition", "householdvehicleaccess", "parksopenspace"
             ])
             assign_attributes(issue, police_districts, ["police_sector", "police_district"])
+            assign_shelter_proximity(issue, shelters)
 
     # Convert to DataFrame and save as Parquet
     df = pd.DataFrame(records)
@@ -116,7 +133,7 @@ default_args = {
 dag = DAG(
     "export_seeclickfix_issues",
     default_args=default_args,
-    description="Export seeclickfix_issues table to Parquet after enriching with council, equity index, and police district data.",
+    description="Export seeclickfix_issues table to Parquet after enriching with council, equity index, police district, and shelter proximity data.",
     schedule_interval="@hourly",
     catchup=False,
 )

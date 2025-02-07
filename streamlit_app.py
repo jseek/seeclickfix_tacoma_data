@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import numpy as np
 
 # Set page config to use wide layout
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
@@ -26,6 +25,9 @@ def load_data():
     
     # Create formatted police district-sector display
     df['police_district_sector'] = df['police_sector'].astype(str) + " - " + df['police_district'].astype(str)
+
+    # Fill missing values for shelter-related fields
+    df['within_10_blocks_of_shelter'] = df['within_10_blocks_of_shelter'].fillna(False)
     
     return df
 
@@ -63,7 +65,11 @@ with col1:
 
     with st.expander("Expand to select issue types"):
         selected_summaries = st.multiselect("Select Summaries", summary_options, default=summary_options)
+    
     homeless_toggle = st.toggle("Show only homeless-related issues", value=False)
+
+    # Shelter Proximity Filters
+    shelter_toggle = st.toggle("Show only issues within 10 blocks of a shelter", value=False)
 
 # Apply filters
 filtered_df = df[(df['created_at'] >= date_range[0]) & (df['created_at'] <= date_range[1])]
@@ -81,6 +87,10 @@ if homeless_toggle:
     filtered_df = filtered_df[filtered_df['homeless_related'] == 'homeless-related']
 
 filtered_df = filtered_df[filtered_df['summary'].isin(selected_summaries)]
+
+# Apply shelter-related filters
+if shelter_toggle:
+    filtered_df = filtered_df[filtered_df['within_10_blocks_of_shelter'] == True]
 
 with col2:
     st.write(f"**Issue Summary:**  Total Issues: **{len(filtered_df)}** | Open Issues: **{len(filtered_df[filtered_df['status'] != 'Closed'])}** | Closed Issues: **{len(filtered_df[filtered_df['status'] == 'Closed'])}**")
