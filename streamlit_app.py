@@ -12,56 +12,6 @@ st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
 # Load data from JSON file - caches data for efficiency
 @st.cache_data
 
-def load_district_boundaries():
-    with open("City_Council_Districts.geojson") as f:
-        geojson_data = json.load(f)
-    
-    district_shapes = []
-    for feature in geojson_data["features"]:
-        properties = feature["properties"]
-        
-        district = properties.get("district", "Unknown")
-        councilmember = properties.get("councilmember", "Unknown")
-        councilmember_email = properties.get("councilmember_email", "Unknown")
-        councilmember_photo = properties.get("councilmember_photo", "Unknown")
-        councilmember_phonenumber = properties.get("phonenumber", "Unknown")
-        councilmember_supportstaff = properties.get("supportstaff", "Unknown")
-        councilmember_supportstaff_email = properties.get("supportstaff_email", "Unknown")
-        councilmember_webpage = properties.get("webpage", "Unknown")
-        
-        polygon = shape(feature["geometry"])
-        
-        district_shapes.append({
-            "district": district,
-            "polygon": polygon,
-            "councilmember": councilmember,
-            "councilmember_email": councilmember_email,
-            "councilmember_photo": councilmember_photo,
-            "councilmember_phonenumber": councilmember_phonenumber,
-            "councilmember_supportstaff": councilmember_supportstaff,
-            "councilmember_supportstaff_email": councilmember_supportstaff_email,
-            "councilmember_webpage": councilmember_webpage
-        })
-    
-    return district_shapes
-
-# Function to find district and additional details
-def get_district_info(lat, lng, district_shapes):
-    point = Point(lng, lat)  # Note: (lng, lat) for Shapely
-    for district_info in district_shapes:
-        if district_info["polygon"].contains(point):
-            return district_info
-    return {
-        "district": "Unknown",
-        "councilmember": "Unknown",
-        "councilmember_email": "Unknown",
-        "councilmember_photo": "Unknown",
-        "councilmember_phonenumber": "Unknown",
-        "councilmember_supportstaff": "Unknown",
-        "councilmember_supportstaff_email": "Unknown",
-        "councilmember_webpage": "Unknown"
-    }  # Default values if no match found
-
 def load_data():
     df = pd.read_json("exports/seeclickfix_issues_dump.json")
     df['created_at'] = pd.to_datetime(df['created_at'])
@@ -71,20 +21,9 @@ def load_data():
 
     df['homeless_related'] = df['summary'].str.contains("homeless|someone living on", case=False, na=False) | \
                             df['description'].str.contains("homeless", case=False, na=False)
+
     df['homeless_related'] = df['homeless_related'].map({True: 'homeless-related', False: 'other issues'})
 
-    # Load district boundaries
-    district_shapes = load_district_boundaries()
-
-    # Assign district and additional details to each issue
-    district_info_cols = ["district", "councilmember", "councilmember_email", "councilmember_photo", 
-                          "councilmember_phonenumber", "councilmember_supportstaff", 
-                          "councilmember_supportstaff_email", "councilmember_webpage"]
-
-    district_info_df = df.apply(lambda row: pd.Series(get_district_info(row["lat"], row["lng"], district_shapes)), axis=1)
-
-    # Merge district information into the main dataframe
-    df = pd.concat([df, district_info_df[district_info_cols]], axis=1)
 
     return df
 
@@ -257,24 +196,6 @@ st.dataframe(filtered_df)
 
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
-# Horizontal bar chart for issue counts by councilmember
-st.subheader("Issues by District Councilmember")
-st.markdown("Shows the number of reported issues by city councilmember.")
-
-# Count issues per councilmember
-councilmember_counts = filtered_df['councilmember'].value_counts().sort_values(ascending=True)
-
-# Create a horizontal bar chart
-fig_councilmembers = px.bar(
-    councilmember_counts,
-    x=councilmember_counts.values,
-    y=councilmember_counts.index,
-    orientation='h',
-    labels={'x': 'Count', 'y': 'councilmember'},
-    title="Number of Issues by councilmember"
-)
-
-st.plotly_chart(fig_councilmembers)
 
 st.markdown(
     """
