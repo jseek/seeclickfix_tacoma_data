@@ -19,6 +19,7 @@ DB_CONN_PARAMS = {
 OUTPUT_FILE_PATH = "/opt/airflow/exports/seeclickfix_issues_dump.parquet"
 COUNCIL_GEOJSON_PATH = "/opt/airflow/exports/City_Council_Districts.geojson"
 EQUITY_GEOJSON_PATH = "/opt/airflow/exports/Equity_Index_2024_(Tacoma).geojson"
+POLICE_GEOJSON_PATH = "/opt/airflow/exports/Police_Districts_(Tacoma).geojson"
 
 def load_geojson(file_path, attribute_mapping):
     """Load a GeoJSON file and parse polygons with associated attributes."""
@@ -43,7 +44,7 @@ def assign_attributes(issue, features, attribute_keys):
             break  # Stop searching once a match is found
 
 def export_to_parquet():
-    """Fetch all records from seeclickfix_issues, enrich with council and equity index data, and save as Parquet."""
+    """Fetch all records from seeclickfix_issues, enrich with council, equity index, and police district data, and save as Parquet."""
     # Connect to the database
     conn = psycopg2.connect(**DB_CONN_PARAMS)
     cursor = conn.cursor()
@@ -57,7 +58,7 @@ def export_to_parquet():
     cursor.close()
     conn.close()
 
-    # Load council district polygons
+    # Load geojson data
     council_districts = load_geojson(COUNCIL_GEOJSON_PATH, {
         "councilmember": "councilmember",
         "councilmember_email": "councilmember_email",
@@ -69,7 +70,6 @@ def export_to_parquet():
         "councilmember_webpage": "webpage",
     })
 
-    # Load equity index polygons
     equity_index = load_geojson(EQUITY_GEOJSON_PATH, {
         "equityindex": "equityindex",
         "livabilityindex": "livabilityindex",
@@ -81,8 +81,13 @@ def export_to_parquet():
         "householdvehicleaccess": "householdvehicleaccess",
         "parksopenspace": "parksopenspace",
     })
-
-    # Assign council and equity data to each issue
+    
+    police_districts = load_geojson(POLICE_GEOJSON_PATH, {
+        "police_sector": "sector",
+        "police_district": "district"
+    })
+    
+    # Assign attributes
     for issue in records:
         if "lat" in issue and "lng" in issue:
             assign_attributes(issue, council_districts, [
@@ -94,6 +99,7 @@ def export_to_parquet():
                 "equityindex", "livabilityindex", "accessibilityindex", "economicindex", "educationindex",
                 "environmentalindex", "averagepavementcondition", "householdvehicleaccess", "parksopenspace"
             ])
+            assign_attributes(issue, police_districts, ["police_sector", "police_district"])
 
     # Convert to DataFrame and save as Parquet
     df = pd.DataFrame(records)
@@ -110,7 +116,7 @@ default_args = {
 dag = DAG(
     "export_seeclickfix_issues",
     default_args=default_args,
-    description="Export seeclickfix_issues table to Parquet after enriching with council and equity index data.",
+    description="Export seeclickfix_issues table to Parquet after enriching with council, equity index, and police district data.",
     schedule_interval="@hourly",
     catchup=False,
 )

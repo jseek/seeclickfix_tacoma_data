@@ -24,6 +24,9 @@ def load_data():
     # Create formatted district display
     df['district_display'] = df['council_distinct'].fillna(0).astype(int).astype(str) + " - " + df['councilmember'].fillna("Unknown")
     
+    # Create formatted police district-sector display
+    df['police_district_sector'] = df['police_sector'].astype(str) + " - " + df['police_district'].astype(str)
+    
     return df
 
 # Streamlit UI setup
@@ -40,7 +43,16 @@ with col1:
 
     # District filter
     district_options = ["All"] + sorted(df['district_display'].dropna().unique().tolist())
-    selected_district = st.selectbox("Filter by District", district_options)
+    selected_district = st.selectbox("Filter by City Council District", district_options)
+    
+    # Police district-sector filter
+    police_district_sector_options = sorted(df['police_district_sector'].dropna().unique().tolist())
+    with st.expander("Filter by Police Sector - District", expanded=False):
+        selected_police_district_sectors = st.multiselect(
+            "Select Police Sectors",
+            police_district_sector_options,
+            default=police_district_sector_options
+        )
 
     # Equity Index filter
     equity_index_options = ["All"] + sorted(df['equityindex'].dropna().unique().tolist())
@@ -58,6 +70,9 @@ filtered_df = df[(df['created_at'] >= date_range[0]) & (df['created_at'] <= date
 
 if selected_district != "All":
     filtered_df = filtered_df[filtered_df['district_display'] == selected_district]
+
+if selected_police_district_sectors:
+    filtered_df = filtered_df[filtered_df['police_district_sector'].isin(selected_police_district_sectors)]
 
 if selected_equity_index != "All":
     filtered_df = filtered_df[filtered_df['equityindex'] == selected_equity_index]
