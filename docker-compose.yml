@@ -54,7 +54,7 @@ services:
     ports:
       - "8501:8501"
     command: >
-      sh -c "pip install streamlit psycopg2 pandas plotly && streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0"
+      sh -c "pip install streamlit psycopg2 pandas plotly shapely && streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0"
     depends_on:
       - postgres
 
