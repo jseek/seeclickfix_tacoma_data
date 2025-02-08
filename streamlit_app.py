@@ -57,6 +57,7 @@ total_population = equity_population_df["population"].sum()
 
 # UI Layout
 st.title("Tacoma 311 Issues Dashboard")
+st.write("Column names:", df.columns.tolist())
 
 col1, col2 = st.columns([1, 2])
 
@@ -328,18 +329,36 @@ for feature in equity_geojson["features"]:
     equity_map_data.append({
         "geometry": feature["geometry"],
         "equity_id": feature["properties"].get("objectid", "Unknown"),
-        "population": feature["properties"].get("population", 0)  # Get population value
+        "population": feature["properties"].get("population", 1)  # Default to 1 to avoid division by zero
     })
+
+# Compute issue counts grouped by equity_objectid
+issue_counts = filtered_df.groupby("equity_objectid").size().reset_index(name="issue_count")
+
+# Merge issue counts with equity map data
+equity_map_data_dict = {f["equity_id"]: f for f in equity_map_data}
+for _, row in issue_counts.iterrows():
+    equity_id = row["equity_objectid"]
+    if equity_id in equity_map_data_dict:
+        equity_map_data_dict[equity_id]["issue_count"] = row["issue_count"]
+
+# Set default issue_count to 0 if not present and compute issues per capita
+for feature in equity_map_data:
+    feature["issue_count"] = feature.get("issue_count", 0)
+    feature["issues_per_capita"] = feature["issue_count"] / feature["population"] if feature["population"] > 0 else 0
+
+# Get max issues per capita for normalization
+max_issues_per_capita = max([f["issues_per_capita"] for f in equity_map_data] or [1])
+
+# Define color scale (Green → Yellow → Red, where Red is the worst)
+colorscale = px.colors.diverging.RdYlGn[::-1]  # Reverse to make red the highest
+num_colors = len(colorscale)
 
 # Create the map
 fig = go.Figure()
 
-# Define color scale based on population
-colorscale = px.colors.sequential.Blues
-max_population = max([f["population"] for f in equity_map_data] or [1])
-
 for feature in equity_map_data:
-    color_idx = int((feature["population"] / max_population) * (len(colorscale) - 1))
+    color_idx = int((feature["issues_per_capita"] / max_issues_per_capita) * (num_colors - 1))
     color = colorscale[color_idx]
     
     if feature["geometry"]["type"] == "Polygon":
@@ -351,8 +370,14 @@ for feature in equity_map_data:
                     mode="lines",
                     fill="toself",
                     fillcolor=color,
-                    line=dict(width=2, color='blue'),
-                    hovertemplate="Equity ID: %{customdata[0]}<br>Population: %{customdata[1]}<extra></extra>", customdata=[[feature['equity_id'], feature['population']]] * len(polygon)
+                    line=dict(width=2, color='black'),
+                    hovertemplate=(
+                        "Equity ID: %{customdata[0]}<br>"
+                        "Population: %{customdata[1]:,.0f}<br>"
+                        "Issue Count: %{customdata[2]:,.0f}<br>"
+                        "Issues per Capita: %{customdata[3]:.4f}<extra></extra>"
+                    ),
+                    customdata=[[feature['equity_id'], feature['population'], feature['issue_count'], feature['issues_per_capita']]] * len(polygon)
                 ))
     elif feature["geometry"]["type"] == "MultiPolygon":
         for multi_polygon in feature["geometry"]["coordinates"]:
@@ -364,8 +389,14 @@ for feature in equity_map_data:
                         mode="lines",
                         fill="toself",
                         fillcolor=color,
-                        line=dict(width=2, color='blue'),
-                        hovertemplate="Equity ID: %{customdata[0]}<br>Population: %{customdata[1]}<extra></extra>", customdata=[[feature['equity_id'], feature['population']]]
+                        line=dict(width=2, color='black'),
+                        hovertemplate=(
+                            "Equity ID: %{customdata[0]}<br>"
+                            "Population: %{customdata[1]:,.0f}<br>"
+                            "Issue Count: %{customdata[2]:,.0f}<br>"
+                            "Issues per Capita: %{customdata[3]:.4f}<extra></extra>"
+                        ),
+                        customdata=[[feature['equity_id'], feature['population'], feature['issue_count'], feature['issues_per_capita']]]
                     ))
 
 fig.update_layout(
@@ -383,8 +414,8 @@ if equity_map_data:
 else:
     st.warning("No equity index data available to display on the map.")
 
-
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
 
 
 st.markdown(
