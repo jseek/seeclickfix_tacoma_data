@@ -318,6 +318,80 @@ st.plotly_chart(fig)
 
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
+
+@st.cache_data
+def load_equity_geojson():
+    with open("exports/Equity_Index_2024_(Tacoma).geojson", "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# Load data
+equity_geojson = load_equity_geojson()
+
+# Extract polygon coordinates and properties
+equity_map_data = []
+for feature in equity_geojson["features"]:
+    equity_map_data.append({
+        "geometry": feature["geometry"],
+        "equity_id": feature["properties"].get("objectid", "Unknown"),
+        "population": feature["properties"].get("population", 0)  # Get population value
+    })
+
+# Create the map
+fig = go.Figure()
+
+# Define color scale based on population
+colorscale = px.colors.sequential.Blues
+max_population = max([f["population"] for f in equity_map_data] or [1])
+
+for feature in equity_map_data:
+    color_idx = int((feature["population"] / max_population) * (len(colorscale) - 1))
+    color = colorscale[color_idx]
+    
+    if feature["geometry"]["type"] == "Polygon":
+        for polygon in feature["geometry"]["coordinates"]:
+            if isinstance(polygon[0], list):  # Ensure it's a list of coordinates
+                fig.add_trace(go.Scattermapbox(
+                    lon=[point[0] for point in polygon],
+                    lat=[point[1] for point in polygon],
+                    mode="lines",
+                    fill="toself",
+                    fillcolor=color,
+                    line=dict(width=2, color='blue'),
+                    hovertemplate="Equity ID: %{customdata[0]}<br>Population: %{customdata[1]}<extra></extra>", customdata=[[feature['equity_id'], feature['population']]] * len(polygon)
+                ))
+    elif feature["geometry"]["type"] == "MultiPolygon":
+        for multi_polygon in feature["geometry"]["coordinates"]:
+            for polygon in multi_polygon:
+                if isinstance(polygon[0], list):  # Ensure it's a list of coordinates
+                    fig.add_trace(go.Scattermapbox(
+                        lon=[point[0] for point in polygon],
+                        lat=[point[1] for point in polygon],
+                        mode="lines",
+                        fill="toself",
+                        fillcolor=color,
+                        line=dict(width=2, color='blue'),
+                        hovertemplate="Equity ID: %{customdata[0]}<br>Population: %{customdata[1]}<extra></extra>", customdata=[[feature['equity_id'], feature['population']]]
+                    ))
+
+fig.update_layout(
+    mapbox=dict(
+        style="open-street-map",
+        center=dict(lat=47.2529, lon=-122.4443),
+        zoom=11
+    ),
+    margin=dict(l=0, r=0, t=0, b=0)
+)
+
+st.markdown("### Equity Index Map")
+if equity_map_data:
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("No equity index data available to display on the map.")
+
+
+st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+
 st.markdown(
     """
     Tacoma’s 311 system serves as a critical channel for residents to report non-emergency issues, such as potholes, graffiti, illegal dumping, and homelessness-related concerns. Effectively tracking and analyzing these reports is essential for improving city services, increasing government accountability, and ensuring that all neighborhoods receive equitable attention.
