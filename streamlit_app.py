@@ -22,7 +22,7 @@ def load_data():
     df['homeless_related'] = df['homeless_related'].map({True: 'homeless-related', False: 'other issues'})
 
     # Create formatted district display
-    df['district_display'] = df['council_distinct'].fillna(0).astype(int).astype(str) + " - " + df['councilmember'].fillna("Unknown")
+    df['district_display'] = df['council_district'].fillna(0).astype(int).astype(str) + " - " + df['councilmember'].fillna("Unknown")
     
     # Create formatted police district-sector display
     df['police_district_sector'] = df['police_sector'].astype(str) + " - " + df['police_district'].astype(str)
@@ -51,8 +51,6 @@ def load_equity_population():
 # Load data
 df = load_data()
 equity_population_df = load_equity_population()
-
-# Convert equity_objectid in both DataFrames to string for proper merging
 
 # Calculate total population across all areas
 total_population = equity_population_df["population"].sum()
