@@ -311,11 +311,8 @@ fig = px.scatter(
 fig.update_traces(textposition="top center")
 st.plotly_chart(fig)
 
-
-
-
+# Equity Map Section
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
-
 
 @st.cache_data
 def load_equity_geojson():
