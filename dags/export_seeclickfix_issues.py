@@ -75,7 +75,7 @@ def export_to_parquet():
         "councilmember": "councilmember",
         "councilmember_email": "councilmember_email",
         "councilmember_photo": "councilmember_photo",
-        "council_distinct": "dist_id",
+        "council_district": "dist_id",
         "councilmember_phonenumber": "phonenumber",
         "councilmember_supportstaff": "supportstaff",
         "councilmember_supportstaff_email": "supportstaff_email",
@@ -108,7 +108,7 @@ def export_to_parquet():
     for issue in records:
         if "lat" in issue and "lng" in issue:
             assign_attributes(issue, council_districts, [
-                "councilmember", "councilmember_email", "councilmember_photo", "council_distinct",
+                "councilmember", "councilmember_email", "councilmember_photo", "council_district",
                 "councilmember_phonenumber", "councilmember_supportstaff", "councilmember_supportstaff_email",
                 "councilmember_webpage"
             ])
