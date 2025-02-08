@@ -57,7 +57,6 @@ total_population = equity_population_df["population"].sum()
 
 # UI Layout
 st.title("Tacoma 311 Issues Dashboard")
-st.write("Column names:", df.columns.tolist())
 
 col1, col2 = st.columns([1, 2])
 
