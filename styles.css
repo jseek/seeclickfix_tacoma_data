@@ -1,0 +1,15 @@
+/* styles.css */
+
+/* Example: fixed sidebar container styling */
+.sidebar-container {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-right: 1px solid #ccc;
+}
+
+/* Example: additional styling if needed */
+.header {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
