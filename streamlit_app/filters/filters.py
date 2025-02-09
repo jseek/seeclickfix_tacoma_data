@@ -1,5 +1,5 @@
 import streamlit as st
-from filters.date_filter import apply_date_filter
+from .date_filter import apply_date_filter
 
 def apply_filters(df):
     """Display UI filters and return the filtered DataFrame."""
