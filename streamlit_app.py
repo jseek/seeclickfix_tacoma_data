@@ -38,30 +38,49 @@ total_population = equity_population_df["population"].sum()
 # UI Layout
 st.title("Tacoma 311 Issues Dashboard")
 
-# Place filters in the sidebar without an additional expander
 with st.sidebar:
     st.header("Filters")
     filtered_df = apply_filters(df)
 
-# Main area: display your visualizations using the filtered DataFrame
+# Display issues over time
 display_issues_over_time(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display aging analysis of issues
 display_aging_analysis(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display map of issues
 display_map(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display summary of issues
 display_issue_summary(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display resolution time by assignee
 display_assignee_resolution_time(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display performance of assignees
 display_assignee_performance(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display data table of issues
 issue_data_table(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display resolution time by district
 display_district_resolution_time(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display equity issues analysis
 display_equity_issues_analysis(filtered_df, equity_population_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display equity map of issues
 display_equity_map(filtered_df)
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+
+# Display 311 impact analysis
 display_311_impact()
