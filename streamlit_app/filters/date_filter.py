@@ -31,8 +31,8 @@ def apply_date_filter(df):
         "Custom"
     ]
     
-    # Default to "Current Week" (so the slider won't be shown initially)
-    selected_option = st.radio("Quick Date Range Options", quick_options, index=0)
+    # Default to "Past Two Calendar Years" (index 3)
+    selected_option = st.radio("Select Date Range", quick_options, index=3)
     
     if selected_option == "Current Week":
         # Compute Monday of the current week.
