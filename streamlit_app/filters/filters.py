@@ -1,15 +1,12 @@
 import streamlit as st
+from filters.date_filter import apply_date_filter
 
 def apply_filters(df):
-    """Function to display UI filters and return the filtered DataFrame."""
-    # Date range filter
-    min_date = df['created_at'].min().to_pydatetime()
-    max_date = df['created_at'].max().to_pydatetime()
-    date_range = st.slider("Select Issue Created Date Range", 
-                           min_value=min_date, 
-                           max_value=max_date, 
-                           value=(min_date, max_date))
-
+    """Display UI filters and return the filtered DataFrame."""
+    
+    # Use the date filter from the separate module.
+    date_range = apply_date_filter(df)
+    
     # District filter
     district_options = ["All"] + sorted(df['district_display'].dropna().unique().tolist())
     selected_district = st.selectbox("Filter by City Council District", district_options)
