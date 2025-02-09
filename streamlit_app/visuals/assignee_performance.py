@@ -40,3 +40,12 @@ def display_assignee_performance(filtered_df):
 
     # Display results
     st.dataframe(assignee_stats)
+
+    # Scatter plot (existing visualization)
+    st.subheader("Issue Distribution by Assignee")
+    st.scatter_chart(filtered_df[['longitude', 'latitude']])
+
+    # Data table below the scatter plot
+    st.subheader("Issues per Assignee")
+    issue_counts = assignee_stats[['assignee_name', 'total_issues']].rename(columns={'total_issues': 'number_of_issues'})
+    st.dataframe(issue_counts)
