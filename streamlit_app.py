@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import json
+from issue_mapping import display_map  # Import the map function
 
 # Set page config to use wide layout
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
@@ -151,36 +152,9 @@ st.dataframe(aging_summary)
 
 ## Location Analysis section
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
-
-map_col1, map_col2 = st.columns([1, 1])
 issue_mapping_df = filtered_df
 
-with map_col1:
-    # Display issue locations on a map
-    st.subheader("Issue Locations")
-    st.markdown("Maps the geographical distribution of issues. Hover over the dot for details on the issue.")
-    fig = px.scatter_mapbox(issue_mapping_df, lat="lat", lon="lng", hover_data=["description", "status"],
-                            mapbox_style="open-street-map", zoom=10)
-    st.plotly_chart(fig)
-
-with map_col2:
-    # Heatmap of issue density
-    st.subheader("Issue Heatmap")
-    st.markdown("Highlights areas with a high concentration of reported issues.")
-    fig_heatmap = go.Figure(go.Densitymapbox(
-        lat=issue_mapping_df['lat'],
-        lon=issue_mapping_df['lng'],
-        z=[1] * len(issue_mapping_df),  # Each point contributes equally
-        radius=10,  # Adjust radius for heat intensity
-        colorscale="Viridis"
-    ))
-    fig_heatmap.update_layout(
-        mapbox_style="open-street-map",
-        mapbox_center={"lat": issue_mapping_df['lat'].mean(), "lon": issue_mapping_df['lng'].mean()},
-        mapbox_zoom=10
-    )
-    st.plotly_chart(fig_heatmap)
-
+display_map(issue_mapping_df)
 
 st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
 
