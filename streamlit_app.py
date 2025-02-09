@@ -23,36 +23,12 @@ from streamlit_app.visuals import (
     issue_data_table,
 )
 
-# Set up page configuration (sidebar expanded by default)
-st.set_page_config(
-    page_title="Tacoma 311 Issues Dashboard",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# Set up page configuration
+st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
 
-# Read and inject custom CSS (if desired)
+# Read and inject custom CSS
 with open("styles.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
-# Optional: Add a persistent "Filters" label on the main page
-st.markdown(
-    """
-    <style>
-    .fixed-filter-label {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background-color: #f0f2f6;
-        padding: 5px 10px;
-        border-radius: 4px;
-        font-weight: bold;
-        z-index: 1000;
-    }
-    </style>
-    <div class="fixed-filter-label">Filters</div>
-    """,
-    unsafe_allow_html=True,
-)
 
 # Load data
 df = load_issues()
@@ -63,7 +39,7 @@ total_population = equity_population_df["population"].sum()
 st.title("Tacoma 311 Issues Dashboard")
 
 with st.sidebar:
-    st.sidebar.title("Filters")
+    st.header("Filters")
     filtered_df = apply_filters(df)
 
 # Define the tab labels
