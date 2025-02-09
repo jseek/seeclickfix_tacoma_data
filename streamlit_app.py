@@ -71,6 +71,7 @@ with tabs[2]:
     display_map(filtered_df)
 
 with tabs[3]:
+    display_map(filtered_df)
     # display_department_performance(filtered_df)
 
 with tabs[4]:
