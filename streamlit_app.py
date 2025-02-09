@@ -42,45 +42,52 @@ with st.sidebar:
     st.header("Filters")
     filtered_df = apply_filters(df)
 
-# Display issues over time
-display_issues_over_time(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+# Define the tab labels
+tab_labels = [
+    "Issues Over Time",
+    "Aging Analysis",
+    "Map",
+    "Issue Summary",
+    "Assignee Resolution Time",
+    "Assignee Performance",
+    "District Resolution Time",
+    "Equity Issues Analysis",
+    "Equity Map",
+    "Data Table",
+    "311 Impact"
+]
 
-# Display aging analysis of issues
-display_aging_analysis(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+tabs = st.tabs(tab_labels)
 
-# Display map of issues
-display_map(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[0]:
+    display_issues_over_time(filtered_df)
 
-# Display summary of issues
-display_issue_summary(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[1]:
+    display_aging_analysis(filtered_df)
 
-# Display resolution time by assignee
-display_assignee_resolution_time(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[2]:
+    display_map(filtered_df)
 
-# Display performance of assignees
-display_assignee_performance(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[3]:
+    display_issue_summary(filtered_df)
 
-# Display data table of issues
-issue_data_table(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[4]:
+    display_assignee_resolution_time(filtered_df)
 
-# Display resolution time by district
-display_district_resolution_time(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[5]:
+    display_assignee_performance(filtered_df)
 
-# Display equity issues analysis
-display_equity_issues_analysis(filtered_df, equity_population_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[6]:
+    display_district_resolution_time(filtered_df)
 
-# Display equity map of issues
-display_equity_map(filtered_df)
-st.markdown("<hr style='border: 1px solid #ccc;'>", unsafe_allow_html=True)
+with tabs[7]:
+    display_equity_issues_analysis(filtered_df, equity_population_df)
 
-# Display 311 impact analysis
-display_311_impact()
+with tabs[8]:
+    display_equity_map(filtered_df)
+
+with tabs[9]:
+    issue_data_table(filtered_df)
+
+with tabs[10]:
+    display_311_impact()
