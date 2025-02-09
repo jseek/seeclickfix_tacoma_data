@@ -10,19 +10,19 @@ def apply_date_filter(df):
         - Current Week: Monday to today.
         - Current Month: 1st of the month to today.
         - Current Year: January 1st to today.
-        - Past Two Calendar Years: Jan 1 of last year to today.
+        - Past Two Calendar Years: January 1 of last year to today.
         - Custom: User selects a range via a slider.
     """
-    # Get the overall date boundaries from the DataFrame
+    # Determine the dataset's date boundaries.
     dataset_min_date = df['created_at'].min().to_pydatetime()
     dataset_max_date = df['created_at'].max().to_pydatetime()
     
-    # Use today's date as reference, but if the dataset doesn't extend to today, use dataset_max_date.
+    # Use today’s date as a reference, but if the dataset’s max is earlier, use that.
     today = datetime.today()
     if today > dataset_max_date:
         today = dataset_max_date
 
-    # Quick options available for the date filter.
+    # Define quick option choices.
     quick_options = [
         "Current Week",
         "Current Month",
@@ -31,23 +31,24 @@ def apply_date_filter(df):
         "Custom"
     ]
     
-    selected_option = st.radio("Quick Date Range Options", quick_options, index=quick_options.index("Custom"))
+    # Default to "Current Week" (so the slider won't be shown initially)
+    selected_option = st.radio("Quick Date Range Options", quick_options, index=0)
     
     if selected_option == "Current Week":
         # Compute Monday of the current week.
         start_date = today - timedelta(days=today.weekday())
-        # Ensure the computed date is not before the dataset’s minimum.
+        # Ensure start_date isn’t before the dataset’s minimum.
         start_date = max(start_date, dataset_min_date)
         end_date = today
         
     elif selected_option == "Current Month":
-        # First day of the current month.
+        # Use the 1st day of the current month.
         start_date = today.replace(day=1)
         start_date = max(start_date, dataset_min_date)
         end_date = today
         
     elif selected_option == "Current Year":
-        # January 1st of the current year.
+        # Use January 1 of the current year.
         start_date = today.replace(month=1, day=1)
         start_date = max(start_date, dataset_min_date)
         end_date = today
@@ -59,6 +60,7 @@ def apply_date_filter(df):
         end_date = today
         
     else:  # Custom
+        # Only show the slider if "Custom" is selected.
         start_date, end_date = st.slider(
             "Select Issue Created Date Range",
             min_value=dataset_min_date,
