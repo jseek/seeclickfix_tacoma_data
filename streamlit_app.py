@@ -68,26 +68,26 @@ with tabs[1]:
 with tabs[2]:
     display_map(filtered_df)
 
-with tabs[4]:
+with tabs[3]:
     display_issue_summary(filtered_df)
 
-with tabs[5]:
+with tabs[4]:
     display_assignee_resolution_time(filtered_df)
 
-with tabs[6]:
+with tabs[5]:
     display_assignee_performance(filtered_df)
 
-with tabs[7]:
+with tabs[6]:
     display_district_resolution_time(filtered_df)
 
-with tabs[8]:
+with tabs[7]:
     display_equity_issues_analysis(filtered_df, equity_population_df)
 
-with tabs[9]:
+with tabs[8]:
     display_equity_map(filtered_df)
 
-with tabs[10]:
+with tabs[9]:
     issue_data_table(filtered_df)
 
-with tabs[11]:
+with tabs[10]:
     display_311_impact()
