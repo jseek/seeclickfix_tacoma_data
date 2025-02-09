@@ -1,8 +1,8 @@
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from maps.heatmap import render_heatmap
-from maps.scatter_map import render_scatter_map
+from streamlit_app.visuals.maps.heatmap import render_heatmap
+from streamlit_app.visuals.maps.scatter_map import render_scatter_map
 
 def display_map(issue_mapping_df):
     """Displays the interactive map section with a toggle for Heatmap vs. Clustered Issues."""
