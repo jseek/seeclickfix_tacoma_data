@@ -1,37 +1,35 @@
 import streamlit as st
-import matplotlib.pyplot as plt
-from wordcloud import WordCloud, STOPWORDS
 
 def issue_data_table(df):
     st.subheader("Issue Data Table")
     st.markdown("Details on each issue.")
 
-    # Generate word cloud if description column exists and is not empty
-    if "description" in df.columns and not df["description"].dropna().empty:
-        st.subheader("Word Cloud of Issue Descriptions")
+    # Allow the user to select the number of rows per page
+    page_size = st.selectbox("Select page size", options=[5, 10, 20, 50], index=1)
 
-        # Combine all descriptions into a single string, excluding NaNs
-        text = " ".join(df["description"].dropna())
+    # Initialize the current page in session state if it doesn't exist
+    if 'page_number' not in st.session_state:
+        st.session_state.page_number = 1
 
-        # Define stopwords
-        stopwords = set(STOPWORDS)
+    total_rows = len(df)
+    total_pages = (total_rows - 1) // page_size + 1
 
-        # Generate word cloud
-        wordcloud = WordCloud(
-            width=800, 
-            height=400, 
-            background_color="white", 
-            stopwords=stopwords, 
-            colormap="viridis"
-        ).generate(text)
+    # Create navigation buttons for pagination
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("Previous") and st.session_state.page_number > 1:
+            st.session_state.page_number -= 1
 
-        # Display word cloud
-        fig, ax = plt.subplots(figsize=(10, 5))
-        ax.imshow(wordcloud, interpolation="bilinear")
-        ax.axis("off")
-        st.pyplot(fig)
-    else:
-        st.warning("No valid descriptions available to generate a word cloud.")
+    with col3:
+        if st.button("Next") and st.session_state.page_number < total_pages:
+            st.session_state.page_number += 1
 
-    # Display data table
-    st.dataframe(df)
+    # Display the current page number and total pages
+    st.write(f"Page {st.session_state.page_number} of {total_pages}")
+
+    # Calculate the index range for the current page and display the subset of the DataFrame
+    start_idx = (st.session_state.page_number - 1) * page_size
+    end_idx = start_idx + page_size
+    df_page = df.iloc[start_idx:end_idx]
+
+    st.dataframe(df_page)

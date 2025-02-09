@@ -4,6 +4,7 @@ from .issue_summary_chart import display_issue_summary
 from .aging_analysis import display_aging_analysis
 from .assignee_resolution_time import display_assignee_resolution_time
 from .assignee_performance import display_assignee_performance
+from .department_performance import display_department_performance
 from .district_resolution_time import display_district_resolution_time
 from .equity_issues_analysis import display_equity_issues_analysis
 from .equity_map import display_equity_map
