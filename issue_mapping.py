@@ -1,6 +1,8 @@
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from maps.heatmap import render_heatmap
+from maps.scatter_map import render_scatter_map
 
 def display_map(issue_mapping_df):
     """Displays the interactive map section with a toggle for Heatmap vs. Clustered Issues."""
@@ -21,35 +23,9 @@ def display_map(issue_mapping_df):
 
     # If Heatmap is selected
     if show_heatmap:
-        radius_value = st.slider(
-            "Heatmap Radius", 
-            min_value=1, max_value=50, 
-            value=10, step=1
-        )
-
-        fig = go.Figure(go.Densitymapbox(
-            lat=issue_mapping_df['lat'],
-            lon=issue_mapping_df['lng'],
-            z=[1] * len(issue_mapping_df),  # Each point contributes equally
-            radius=radius_value,  # User-controlled radius
-            colorscale="Viridis"
-        ))
-
+        fig = render_heatmap(issue_mapping_df)
     else:
-        fig = px.scatter_mapbox(
-            issue_mapping_df, 
-            lat="lat", lon="lng", 
-            hover_data=["description", "status"],
-            mapbox_style="open-street-map", 
-            zoom=st.session_state.map_zoom,  # Keep last zoom level
-            center={"lat": st.session_state.map_center_lat, "lon": st.session_state.map_center_lon},  # Keep last center
-            color_discrete_sequence=["red"],  # Use a consistent color
-        )
-
-        fig.update_traces(
-            marker=dict(size=6, opacity=0.8),  # Adjust marker appearance
-            cluster=dict(enabled=True)  # Enable clustering
-        )
+        fig = render_scatter_map(issue_mapping_df)
 
     # Apply session state zoom & center
     fig.update_layout(
