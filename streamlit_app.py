@@ -3,16 +3,16 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import json
-from streamlit_visuals.issue_mapping import display_map
-from streamlit_visuals.issues_over_time import display_issues_over_time
-from streamlit_visuals.issue_summary_chart import display_issue_summary
-from streamlit_visuals.aging_analysis import display_aging_analysis
-from streamlit_visuals.assignee_resolution_time import display_assignee_resolution_time
-from streamlit_visuals.assignee_performance import display_assignee_performance
-from streamlit_visuals.district_resolution_time import display_district_resolution_time
-from streamlit_visuals.equity_issues_analysis import display_equity_issues_analysis
-from streamlit_visuals.equity_map import display_equity_map
-from streamlit_visuals.about_311_impact import display_311_impact
+from streamlit_app.visuals.issue_mapping import display_map
+from streamlit_app.visuals.issues_over_time import display_issues_over_time
+from streamlit_app.visuals.issue_summary_chart import display_issue_summary
+from streamlit_app.visuals.aging_analysis import display_aging_analysis
+from streamlit_app.visuals.assignee_resolution_time import display_assignee_resolution_time
+from streamlit_app.visuals.assignee_performance import display_assignee_performance
+from streamlit_app.visuals.district_resolution_time import display_district_resolution_time
+from streamlit_app.visuals.equity_issues_analysis import display_equity_issues_analysis
+from streamlit_app.visuals.equity_map import display_equity_map
+from streamlit_app.visuals.about_311_impact import display_311_impact
 
 # Set page config to use wide layout
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
