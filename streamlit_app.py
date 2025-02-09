@@ -11,7 +11,7 @@ from streamlit_app.data.load_equity import load_equity_population
 from streamlit_app.filters.filters import apply_filters  
 from streamlit_app.visuals import (
     display_map,
-    display_department_performance,
+    # display_department_performance,
     display_issues_over_time,
     display_issue_summary,
     display_aging_analysis,
@@ -71,7 +71,7 @@ with tabs[2]:
     display_map(filtered_df)
 
 with tabs[3]:
-    display_department_performance(filtered_df)
+    # display_department_performance(filtered_df)
 
 with tabs[4]:
     display_issue_summary(filtered_df)
