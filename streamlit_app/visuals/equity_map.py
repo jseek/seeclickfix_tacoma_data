@@ -2,12 +2,44 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import json
+import re
 
 @st.cache_data
 def load_equity_geojson():
     """Load the Equity Index GeoJSON file."""
     with open("exports/Equity_Index_2024_(Tacoma).geojson", "r", encoding="utf-8") as f:
         return json.load(f)
+
+def hex_to_rgba(color, opacity=0.7):
+    """Convert a hex color or an rgb/rgba string to an rgba string with the given opacity.
+    
+    If the input starts with '#' it is assumed to be a hex color.
+    If it starts with 'rgb', it is parsed and the opacity is overridden.
+    """
+    if color.startswith("#"):
+        hex_color = color.lstrip('#')
+        # Expand shorthand hex (e.g. "fff") to full form ("ffffff")
+        if len(hex_color) == 3:
+            hex_color = ''.join([c*2 for c in hex_color])
+        try:
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+        except ValueError:
+            # Fallback: return the original color if conversion fails
+            return color
+        return f"rgba({r}, {g}, {b}, {opacity})"
+    elif color.startswith("rgb"):
+        # Extract numeric values from the string
+        nums = re.findall(r"[\d.]+", color)
+        if len(nums) >= 3:
+            r, g, b = nums[:3]
+            return f"rgba({r}, {g}, {b}, {opacity})"
+        else:
+            return color
+    else:
+        # Fallback if the color format is unrecognized.
+        return color
 
 def display_equity_map(filtered_df):
     """Function to compute and display the equity index map with issue density."""
@@ -38,10 +70,15 @@ def display_equity_map(filtered_df):
     # Set default issue_count to 0 if not present and compute issues per capita
     for feature in equity_map_data:
         feature["issue_count"] = feature.get("issue_count", 0)
-        feature["issues_per_capita"] = feature["issue_count"] / feature["population"] if feature["population"] > 0 else 0
+        feature["issues_per_capita"] = (
+            feature["issue_count"] / feature["population"]
+            if feature["population"] > 0 else 0
+        )
 
-    # Get max issues per capita for normalization
-    max_issues_per_capita = max([f["issues_per_capita"] for f in equity_map_data] or [1])
+    # Compute max issues per capita only for features with a nonzero issue count
+    max_issues_per_capita = max(
+        [f["issues_per_capita"] for f in equity_map_data if f["issue_count"] > 0] or [1]
+    )
 
     # Define color scale (Green → Yellow → Red, where Red is the worst)
     colorscale = px.colors.diverging.RdYlGn[::-1]  # Reverse to make red the highest
@@ -51,9 +88,17 @@ def display_equity_map(filtered_df):
     fig = go.Figure()
 
     for feature in equity_map_data:
-        color_idx = int((feature["issues_per_capita"] / max_issues_per_capita) * (num_colors - 1))
-        color = colorscale[color_idx]
+        # If no issues, use a transparent fill (i.e. no shading)
+        if feature["issue_count"] == 0:
+            color = "rgba(0,0,0,0)"
+        else:
+            # Normalize the issues_per_capita and choose a color from the colorscale
+            color_idx = int((feature["issues_per_capita"] / max_issues_per_capita) * (num_colors - 1))
+            base_color = colorscale[color_idx]
+            # Convert the base color to rgba with the desired opacity
+            color = hex_to_rgba(base_color, opacity=0.5)
 
+        # Add traces based on geometry type
         if feature["geometry"]["type"] == "Polygon":
             for polygon in feature["geometry"]["coordinates"]:
                 if isinstance(polygon[0], list):  # Ensure it's a list of coordinates
