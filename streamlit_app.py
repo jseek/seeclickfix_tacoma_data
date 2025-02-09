@@ -21,7 +21,6 @@ from streamlit_app.visuals import (
     display_equity_map,
     display_311_impact,
     issue_data_table,
-    display_council_map,
 )
 
 # Set up page configuration
@@ -48,7 +47,6 @@ tab_labels = [
     "Issues Over Time",
     "Aging Analysis",
     "Map",
-    "Council District Map",
     "Issue Summary",
     "Assignee Resolution Time",
     "Assignee Performance",
@@ -69,9 +67,6 @@ with tabs[1]:
 
 with tabs[2]:
     display_map(filtered_df)
-
-with tabs[3]:
-    display_council_map(filtered_df)
 
 with tabs[4]:
     display_issue_summary(filtered_df)
