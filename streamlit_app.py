@@ -12,6 +12,10 @@ st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
 def load_data():
     df = pd.read_parquet("exports/seeclickfix_issues_dump.parquet")
     df['created_at'] = pd.to_datetime(df['created_at'])
+
+    show_issues_after_date = '2024-01-01'
+    df = df[df['created_at'] >= show_issues_after_date]
+
     df['updated_at'] = pd.to_datetime(df['updated_at'])
     df['acknowledged_at'] = pd.to_datetime(df['acknowledged_at'])
     df['closed_at'] = pd.to_datetime(df['closed_at'])
