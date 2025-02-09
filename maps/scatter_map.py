@@ -9,7 +9,7 @@ def render_scatter_map(issue_mapping_df):
         mapbox_style="open-street-map", 
         zoom=st.session_state.map_zoom,  # Keep last zoom level
         center={"lat": st.session_state.map_center_lat, "lon": st.session_state.map_center_lon},  # Keep last center
-        color_discrete_sequence=["blue"],  # Use a consistent color
+        color_discrete_sequence=["yellow"],  # Use a consistent color
     )
 
     fig.update_traces(
