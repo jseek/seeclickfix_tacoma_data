@@ -4,6 +4,9 @@ def issue_data_table(df):
     st.subheader("Issue Data Table")
     st.markdown("Details on each issue.")
 
+    # Sort DataFrame by created_at in descending order
+    df = df.sort_values(by="created_at", ascending=False)
+
     # Allow the user to select the number of rows per page
     page_size = st.selectbox("Select page size", options=[5, 10, 20, 50], index=1)
 
