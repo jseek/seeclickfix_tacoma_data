@@ -1,7 +1,15 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
+def display_issues_over_time(df):
+    # Get the selected time granularity from the radio buttons.
+    selected_grandularity, human_readable_time_unit = select_time_granularity(default="Week")
+    
+    issues_created_by_time_period(df, selected_grandularity, human_readable_time_unit)
+
+    
 def select_time_granularity(default="Week"):
     """
     Renders horizontal radio buttons for time granularity selection.
@@ -16,21 +24,21 @@ def select_time_granularity(default="Week"):
     if default not in options:
         default = "Week"
     default_index = options.index(default)
-    selected = st.radio("Select time granularity", options, index=default_index, horizontal=True)
-    return selected
+    selected_grandularity = st.radio("Select time granularity", options, index=default_index, horizontal=True)
 
-def display_issues_over_time(df):
+    # Mapping from the human-readable unit to the pandas period code.
+    period_codes = {"Day": "D", "Week": "W", "Month": "M", "Year": "Y"}
+    period_code = period_codes[selected_grandularity]
+    human_readable_time_unit = selected_grandularity
+
+    return period_code, human_readable_time_unit
+
+def issues_created_by_time_period(df, period_code, human_readable_time_unit):
     """
     Displays a time series line chart of issues with a user-selected granularity.
     The user can choose to view the data by Day, Week, Month, or Year using horizontal radio buttons.
     Each point on the chart is labeled with the count of issues (rotated 90°) and offset from the point.
     """
-    # Get the selected time granularity from the radio buttons.
-    time_unit = select_time_granularity(default="Week")
-    
-    # Mapping from the human-readable unit to the pandas period code.
-    period_codes = {"Day": "D", "Week": "W", "Month": "M", "Year": "Y"}
-    period_code = period_codes[time_unit]
     
     # Convert 'created_at' to the chosen time period (using the start of that period).
     df['time_period'] = df['created_at'].dt.to_period(period_code).apply(lambda r: r.start_time)
@@ -46,7 +54,7 @@ def display_issues_over_time(df):
         time_series_df,
         x='Date',
         y='Number of Issues',
-        title=f"Issues Over Time ({time_unit})",
+        title=f"Issues Created By {human_readable_time_unit}",
         labels={'Date': 'Date', 'Number of Issues': 'Number of Issues'},
         markers=True
     )
@@ -75,4 +83,4 @@ def display_issues_over_time(df):
     )
     
     # Display the chart in Streamlit.
-    st.plotly_chart(fig)
+    return st.plotly_chart(fig)
