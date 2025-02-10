@@ -27,5 +27,8 @@ def load_issues():
 
     # Fill missing values for shelter-related fields
     df['within_10_blocks_of_shelter'] = df['within_10_blocks_of_shelter'].fillna(False)
+
+    # First resolution either acknowledged or closed
+    df['resolved_at'] = df[['acknowledged_at', 'closed_at']].min(axis=1)
     
     return df

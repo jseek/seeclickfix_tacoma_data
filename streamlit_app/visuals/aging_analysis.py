@@ -14,7 +14,6 @@ def display_aging_analysis(filtered_df):
     aging_df = filtered_df[filtered_df['status'].isin(["Open", "Acknowledged"])].copy()
     
     # Compute resolution and acknowledgment times
-    aging_df['resolved_at'] = aging_df[['acknowledged_at', 'closed_at']].min(axis=1)
     aging_df['days_to_resolution'] = (aging_df['resolved_at'] - aging_df['created_at']).dt.days
     aging_df['days_to_acknowledge'] = (aging_df['acknowledged_at'] - aging_df['created_at']).dt.days
     aging_df['acknowledged'] = aging_df['acknowledged_at'].notna()
