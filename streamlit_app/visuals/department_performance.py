@@ -10,13 +10,16 @@ def display_department_performance(filtered_df):
     st.subheader("Department Performance Summary")
     
     # Prepare the data in a separate DataFrame.
-    department_df = prepare_department_data(filtered_df)
+    department_df = filtered_df
     
     # Apply department filter using the separate helper function.
     df_filtered = filter_by_department(department_df)
 
     department_performance_stats(df_filtered)
+    
     st.divider()
+    
+    display_department_resolution_time(df_filtered)
 
 
     # fig = render_heatmap(df_filtered)
@@ -65,7 +68,6 @@ def plot_issues_over_time(df):
     # Display the chart
     st.plotly_chart(fig, use_container_width=True)
 
-
 def plot_top_issue_per_department(df):
     """Creates a scatter plot of the top issue for each department with point size based on issue count."""
 
@@ -96,48 +98,6 @@ def plot_top_issue_per_department(df):
 
     # Display the plot
     st.plotly_chart(fig, use_container_width=True)
-
-def prepare_department_data(df):
-    # --- Compute time-based metrics ---
-    df['time_to_acknowledge'] = (df['acknowledged_at'] - df['created_at']).dt.days
-    df['time_to_close'] = (df['closed_at'] - df['created_at']).dt.days
-
-    # --- Create department prefix from assignee_name ---
-    # Split the assignee name by "_" and take the first part.
-    df['assignee_department_prefix'] = df['assignee_name'].str.split("_").str[0]
-
-    # --- Mapping dictionary: raw prefix to department ---
-    department_mapping = {
-        "NCS": "Neighborhood and Community Services",
-        "TPD": "Tacoma Police Department",
-        "Police Department - Traffic - JN": "Tacoma Police Department",
-        "Police Department - Traffic - HM": "Tacoma Police Department",
-        "ES": "Environmental Services",
-        "PW": "Public Works",
-        "311 Customer Support Center": "311 Support",
-        "PDS Code Case": "Planning and Development Services",
-        "T&L": "Public Works",
-        "CMO": "City Manager’s Office",
-        "PDS": "Planning and Development Services",
-        "OEHR": "Office of Equity and Human Rights",
-        "Public Works - D.S.": "Public Works",
-        "Public Works - Streets - TD": "Public Works",
-        "Public Works - Traffic - JK": "Public Works",
-        "Public Works - Streets - NG": "Public Works",
-        "Fire": "Tacoma Fire Department",
-        "PPW Water Quality Specialist - Davidson": "Public Works",
-        "PPW – Asst Airport Administrator - Propst": "Public Works",
-        "PPW Water Quality Specialist - Thompson": "Public Works",
-        "IT": "Information Technology",
-        "TPU": "Tacoma Public Utilities",
-        "TVE": "Tacoma Venues & Events",
-        "CED": "Community & Economic Development"
-    }
-
-    # --- Map the raw department prefix to a new "department" column ---
-    df['department'] = df['assignee_department_prefix'].map(department_mapping)
-    
-    return df
 
 def filter_by_department(department_df):
     """
@@ -190,3 +150,43 @@ def department_performance_stats(df):
 
     # --- Display the Results ---
     return st.dataframe(department_stats)
+
+def display_department_resolution_time(filtered_df):
+    """Function to compute and display issue resolution time by department."""
+    st.subheader("Issue Volume vs. Resolution Time by Department")
+
+    # Compute median days to acknowledge or close
+    filtered_df['median_days_to_resolve'] = (
+        (filtered_df[['acknowledged_at', 'closed_at']].min(axis=1) - filtered_df['created_at']).dt.days
+    )
+
+    # Aggregate data by department
+    department_agg = filtered_df.groupby('department').agg(
+        issue_count=('id', 'count'),
+        median_days_to_resolve=('median_days_to_resolve', 'median')
+    ).reset_index()
+
+    # User option to switch between logarithmic and linear scale
+    axis_scale = st.radio("Select axis scale:", ('Linear', 'Logarithmic'), index=0)
+
+    # Create scatter plot
+    fig_scatter = px.scatter(
+        department_agg, 
+        x='median_days_to_resolve', 
+        y='issue_count',
+        text='department',
+        labels={'median_days_to_resolve': 'Median Days to Acknowledge/Close', 'issue_count': 'Number of Issues'},
+        title='Number of Issues vs. Median Days to Acknowledge/Close by Department'
+    )
+
+    fig_scatter.update_traces(textposition='top center')
+
+    # Apply selected axis scale
+    scale_type = 'log' if axis_scale == 'Logarithmic' else 'linear'
+    fig_scatter.update_layout(
+        xaxis_type=scale_type,
+        yaxis_type=scale_type
+    )
+
+    # Display plot in Streamlit
+    st.plotly_chart(fig_scatter)
