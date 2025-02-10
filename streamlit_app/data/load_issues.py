@@ -30,5 +30,49 @@ def load_issues():
 
     # First resolution either acknowledged or closed
     df['resolved_at'] = df[['acknowledged_at', 'closed_at']].min(axis=1)
+
+    # --- Compute time-based metrics ---
+    df['time_to_acknowledge'] = (df['acknowledged_at'] - df['created_at']).dt.days
+    df['time_to_close'] = (df['closed_at'] - df['created_at']).dt.days
+
+    df = prepare_department_data(df)
+
+    return df
+
+def prepare_department_data(df):
+    # --- Create department prefix from assignee_name ---
+    # Split the assignee name by "_" and take the first part.
+    df['assignee_department_prefix'] = df['assignee_name'].str.split("_").str[0]
+
+    # --- Mapping dictionary: raw prefix to department ---
+    department_mapping = {
+        "NCS": "Neighborhood and Community Services",
+        "TPD": "Tacoma Police Department",
+        "Police Department - Traffic - JN": "Tacoma Police Department",
+        "Police Department - Traffic - HM": "Tacoma Police Department",
+        "ES": "Environmental Services",
+        "PW": "Public Works",
+        "311 Customer Support Center": "311 Support",
+        "PDS Code Case": "Planning and Development Services",
+        "T&L": "Public Works",
+        "CMO": "City Manager’s Office",
+        "PDS": "Planning and Development Services",
+        "OEHR": "Office of Equity and Human Rights",
+        "Public Works - D.S.": "Public Works",
+        "Public Works - Streets - TD": "Public Works",
+        "Public Works - Traffic - JK": "Public Works",
+        "Public Works - Streets - NG": "Public Works",
+        "Fire": "Tacoma Fire Department",
+        "PPW Water Quality Specialist - Davidson": "Public Works",
+        "PPW – Asst Airport Administrator - Propst": "Public Works",
+        "PPW Water Quality Specialist - Thompson": "Public Works",
+        "IT": "Information Technology",
+        "TPU": "Tacoma Public Utilities",
+        "TVE": "Tacoma Venues & Events",
+        "CED": "Community & Economic Development"
+    }
+
+    # --- Map the raw department prefix to a new "department" column ---
+    df['department'] = df['assignee_department_prefix'].map(department_mapping)
     
     return df
