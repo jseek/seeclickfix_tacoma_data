@@ -36,7 +36,7 @@ equity_population_df = load_equity_population()
 total_population = equity_population_df["population"].sum()
 
 # UI Layout
-st.title("Tacoma 311 Issues Dashboard")
+st.title("Tacoma 311 Issues")
 st.title("Check Viewer GPS Location")
 
 location = get_geolocation()
