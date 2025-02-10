@@ -17,24 +17,26 @@ def display_department_performance(filtered_df):
 
     department_performance_stats(df_filtered)
     st.divider()
-    fig = render_heatmap(df_filtered)
 
-    # Apply session state zoom & center settings.
-    fig.update_layout(
-        mapbox_style="open-street-map",
-        mapbox_center={"lat": st.session_state.map_center_lat, "lon": st.session_state.map_center_lon},
-        mapbox_zoom=st.session_state.map_zoom
-    )
 
-    # Render the chart with a unique key
-    st.plotly_chart(fig, use_container_width=True, key=f"plotly_chart_{uuid.uuid4()}")
+    # fig = render_heatmap(df_filtered)
 
-    # Manually update the stored map state after rendering.
-    if fig.layout.mapbox.zoom is not None:
-        st.session_state.map_zoom = fig.layout.mapbox.zoom
-    if fig.layout.mapbox.center is not None:
-        st.session_state.map_center_lat = fig.layout.mapbox.center.lat
-        st.session_state.map_center_lon = fig.layout.mapbox.center.lon
+    # # Apply session state zoom & center settings.
+    # fig.update_layout(
+    #     mapbox_style="open-street-map",
+    #     mapbox_center={"lat": st.session_state.map_center_lat, "lon": st.session_state.map_center_lon},
+    #     mapbox_zoom=st.session_state.map_zoom
+    # )
+
+    # # Render the chart with a unique key
+    # st.plotly_chart(fig, use_container_width=True, key=f"plotly_chart_{uuid.uuid4()}")
+
+    # # Manually update the stored map state after rendering.
+    # if fig.layout.mapbox.zoom is not None:
+    #     st.session_state.map_zoom = fig.layout.mapbox.zoom
+    # if fig.layout.mapbox.center is not None:
+    #     st.session_state.map_center_lat = fig.layout.mapbox.center.lat
+    #     st.session_state.map_center_lon = fig.layout.mapbox.center.lon
 
     # st.divider()
     # plot_top_issue_per_department(department_df)
