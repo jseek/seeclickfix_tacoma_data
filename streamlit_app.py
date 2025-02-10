@@ -3,21 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go 
 from streamlit_js_eval import get_geolocation
-
-st.title("Check Viewer GPS Location")
-
-location = get_geolocation()
-
-if location:
-    st.write(f"Latitude: {location['coords']['latitude']}")
-    st.write(f"Longitude: {location['coords']['longitude']}")
-else:
-    st.write("Location permission not granted.")
-
-
-
-
-
 # Import data loaders
 from streamlit_app.data.load_issues import load_issues  
 from streamlit_app.data.load_equity import load_equity_population  
@@ -52,6 +37,20 @@ total_population = equity_population_df["population"].sum()
 
 # UI Layout
 st.title("Tacoma 311 Issues Dashboard")
+st.title("Check Viewer GPS Location")
+
+location = get_geolocation()
+
+if location:
+    st.write(f"Latitude: {location['coords']['latitude']}")
+    st.write(f"Longitude: {location['coords']['longitude']}")
+else:
+    st.write("Location permission not granted.")
+
+
+
+
+
 
 with st.sidebar:
     st.header("Filters")
