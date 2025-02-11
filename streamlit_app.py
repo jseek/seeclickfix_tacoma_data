@@ -11,13 +11,13 @@ from streamlit_app.data.load_equity import load_equity_population
 from streamlit_app.filters.filters import apply_filters  
 from streamlit_app.visuals import (
     display_map,
+    council_districts,
     display_department_performance,
     display_issues_over_time,
     display_issue_summary,
     display_aging_analysis,
     display_assignee_resolution_time,
     display_assignee_performance,
-    display_district_resolution_time,
     display_equity_issues_analysis,
     display_equity_map,
     display_311_impact,
@@ -49,11 +49,11 @@ tab_labels = [
     "Issues Over Time",
     "Aging Analysis",
     "Map",
+    "City Council Districts",
     "Department Performance",
     "Issue Summary",
     "Assignee Resolution Time",
     "Assignee Performance",
-    "District Resolution Time",
     "Equity Issues Analysis",
     "Equity Map",
     "Data Table",
@@ -73,19 +73,19 @@ with tabs[2]:
     display_map(filtered_df)
 
 with tabs[3]:
-    display_department_performance(filtered_df)
+    council_districts(filtered_df)
 
 with tabs[4]:
-    display_issue_summary(filtered_df)
+    display_department_performance(filtered_df)
 
 with tabs[5]:
-    display_assignee_resolution_time(filtered_df)
+    display_issue_summary(filtered_df)
 
 with tabs[6]:
-    display_assignee_performance(filtered_df)
+    display_assignee_resolution_time(filtered_df)
 
 with tabs[7]:
-    display_district_resolution_time(filtered_df)
+    display_assignee_performance(filtered_df)
 
 with tabs[8]:
     display_equity_issues_analysis(filtered_df, equity_population_df)

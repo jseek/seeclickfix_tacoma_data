@@ -35,6 +35,9 @@ def load_issues():
     df['time_to_acknowledge'] = (df['acknowledged_at'] - df['created_at']).dt.days
     df['time_to_close'] = (df['closed_at'] - df['created_at']).dt.days
 
+    # Compute median days to acknowledge or close
+    df['days_to_resolve'] = (df[['acknowledged_at', 'closed_at']].min(axis=1) - df['created_at']).dt.days
+
     df = prepare_department_data(df)
 
     return df
