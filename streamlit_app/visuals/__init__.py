@@ -11,3 +11,4 @@ from .equity_map import display_equity_map
 from .about_311_impact import display_311_impact
 from .issue_data_table import issue_data_table
 from .data_stats import stats
+from .heads_up import heads_up

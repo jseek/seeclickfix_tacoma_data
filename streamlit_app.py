@@ -10,6 +10,7 @@ from streamlit_app.data.load_equity import load_equity_population
 # Import filters and visualizations
 from streamlit_app.filters.filters import apply_filters  
 from streamlit_app.visuals import (
+    heads_up,
     display_map,
     council_districts,
     display_department_performance,
@@ -22,7 +23,7 @@ from streamlit_app.visuals import (
     display_equity_map,
     display_311_impact,
     issue_data_table,
-    data_stats,
+    stats,
 )
 
 # Set up page configuration
@@ -46,6 +47,7 @@ with st.sidebar:
 
 # Define the tab labels
 tab_labels = [
+    "Issue Overview",
     "Issues Over Time",
     "Aging Analysis",
     "Map",
@@ -64,40 +66,43 @@ tab_labels = [
 tabs = st.tabs(tab_labels)
 
 with tabs[0]:
-    display_issues_over_time(filtered_df)
+    heads_up(df, filtered_df)
 
 with tabs[1]:
-    display_aging_analysis(filtered_df)
+    display_issues_over_time(filtered_df)
 
 with tabs[2]:
-    display_map(filtered_df)
+    display_aging_analysis(filtered_df)
 
 with tabs[3]:
-    council_districts(filtered_df)
+    display_map(filtered_df)
 
 with tabs[4]:
-    display_department_performance(filtered_df)
+    council_districts(filtered_df)
 
 with tabs[5]:
-    display_issue_summary(filtered_df)
+    display_department_performance(filtered_df)
 
 with tabs[6]:
-    display_assignee_resolution_time(filtered_df)
+    display_issue_summary(filtered_df)
 
 with tabs[7]:
-    display_assignee_performance(filtered_df)
+    display_assignee_resolution_time(filtered_df)
 
 with tabs[8]:
-    display_equity_issues_analysis(filtered_df, equity_population_df)
+    display_assignee_performance(filtered_df)
 
 with tabs[9]:
-    display_equity_map(filtered_df)
+    display_equity_issues_analysis(filtered_df, equity_population_df)
 
 with tabs[10]:
-    issue_data_table(filtered_df)
+    display_equity_map(filtered_df)
 
 with tabs[11]:
-    display_311_impact()
+    issue_data_table(filtered_df)
 
 with tabs[12]:
+    display_311_impact()
+
+with tabs[13]:
     stats(df)
