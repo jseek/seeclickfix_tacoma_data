@@ -66,7 +66,7 @@ tab_labels = [
 tabs = st.tabs(tab_labels)
 
 with tabs[0]:
-    heads_up(df, filtered_df)
+    heads_up(filtered_df)
 
 with tabs[1]:
     display_issues_over_time(filtered_df)
