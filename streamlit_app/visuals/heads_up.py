@@ -19,13 +19,19 @@ def heads_up(filtered_df):
     created_at_last_week_filtered_df = filtered_df[(filtered_df['created_at_date'] >= last_week_start) & (filtered_df['created_at_date'] <= last_week_to_date)]
     resolved_at_last_week_filtered_df = filtered_df[(filtered_df['resolved_at_date'] >= last_week_start) & (filtered_df['resolved_at_date'] <= last_week_to_date)]
 
-    dates_card(current_date, current_week_start, last_week_start, last_week_to_date)
+    # dates_card(current_date, current_week_start, last_week_start, last_week_to_date)
+
+    value_column = 'summary'
 
     created_card(created_at_week_filtered_df, created_at_last_week_filtered_df)
+    top_this_week_value = get_top_value(created_at_week_filtered_df, value_column)
+    st.write(f"Top Issue This Week: {top_this_week_value} ({top_value_percent_of_whole(top_this_week_value, value_column, created_at_week_filtered_df)})")
 
-    st.write("---")  # Optional separator
-    
+    st.write("---")
+
     resolved_card(resolved_at_week_filtered_df, resolved_at_last_week_filtered_df)
+    top_last_week_value = get_top_value(resolved_at_week_filtered_df, value_column)
+    st.write(f"Top Issue Last Week: {top_last_week_value} ({top_value_percent_of_whole(top_last_week_value, value_column, resolved_at_week_filtered_df)})")
 
 def dates_card(current_date, current_week_start, last_week_start, last_week_to_date):
     dates_col1, dates_col2, dates_col3, dates_col4 = st.columns(4)
@@ -93,7 +99,10 @@ def card_delta_percent_created(this_week_df, last_week_df):
         delta_str = "N/A"
     else:
         delta = ((current_week_count - last_week_count) / last_week_count) * 100
-        delta_str = f"{delta:.2f}%"
+        if delta > 0:
+            delta_str = f"{delta:.2f}% ↑"
+        else:
+            delta_str = f"{delta:.2f}% ↓"
     
     return st.metric(label="Delta % (Created: This Week vs Last Week)", value=delta_str)
 
@@ -128,7 +137,37 @@ def card_delta_percent_resolved(this_week_df, last_week_df):
         delta_str = "N/A"
     else:
         delta = ((current_week_count - last_week_count) / last_week_count) * 100
-        delta_str = f"{delta:.2f}%"
+        if delta > 0:
+            delta_str = f"{delta:.2f}% ↑"
+        else:
+            delta_str = f"{delta:.2f}% ↓"
     
     return st.metric(label="Delta % (Resolved: This Week vs Last Week)", value=delta_str)
 
+
+def get_top_value(df: pd.DataFrame, column: str = "summary") -> str:
+    """
+    Returns the most frequently occurring value in the specified column of a DataFrame.
+
+    :param df: The input DataFrame.
+    :param column: The column name to analyze (default is "summary").
+    :return: The most frequent summary value.
+    """
+    if column not in df.columns:
+        raise ValueError(f"Column '{column}' not found in DataFrame.")
+
+    top_value = df[column].value_counts().idxmax()
+    return top_value
+
+def top_value_percent_of_whole(value, value_column, df):
+    """
+    Returns the percentage of the total count that the specified value represents.
+
+    :param value: The value to calculate the percentage for.
+    :param value_column: The column name to analyze.
+    :param df: The input DataFrame.
+    :return: The percentage of the total count that the specified value represents.
+    """
+    total_count = df[value_column].count()
+    value_count = df[df[value_column] == value][value_column].count()
+    return f"{value_count:,}, {(value_count / total_count) * 100:.2f}%"
