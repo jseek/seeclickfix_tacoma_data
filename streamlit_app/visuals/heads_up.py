@@ -12,13 +12,12 @@ def heads_up(filtered_df):
     current_week_start = current_date - timedelta(days=current_date.weekday())
     days_into_current_week = current_date - current_week_start
     last_week_start = current_week_start - timedelta(days=7)
-    last_week_to_date = current_week_start + days_into_current_week
+    last_week_to_date = current_date - timedelta(days=7)
 
     created_at_week_filtered_df = filtered_df[(filtered_df['created_at_date'] >= current_week_start)]
     resolved_at_week_filtered_df = filtered_df[(filtered_df['resolved_at_date'] >= current_week_start)]
-
-    created_at_last_week_filtered_df = filtered_df[(filtered_df['created_at_date'] >= last_week_start & filtered_df['created_at_date'] <= last_week_to_date)]
-    resolved_at_last_week_filtered_df = filtered_df[(filtered_df['resolved_at_date'] >= last_week_start & filtered_df['resolved_at_date'] <= last_week_to_date)]
+    created_at_last_week_filtered_df = filtered_df[(filtered_df['created_at_date'] >= last_week_start) & (filtered_df['created_at_date'] <= last_week_to_date)]
+    resolved_at_last_week_filtered_df = filtered_df[(filtered_df['resolved_at_date'] >= last_week_start) & (filtered_df['resolved_at_date'] <= last_week_to_date)]
 
     dates_card(current_date, current_week_start, last_week_start, last_week_to_date)
 
