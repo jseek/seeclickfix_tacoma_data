@@ -22,6 +22,7 @@ from streamlit_app.visuals import (
     display_equity_map,
     display_311_impact,
     issue_data_table,
+    data_stats,
 )
 
 # Set up page configuration
@@ -56,7 +57,8 @@ tab_labels = [
     "Equity Issues Analysis",
     "Equity Map",
     "Data Table",
-    "311 Impact"
+    "311 Impact",
+    "Data Details"
 ]
 
 tabs = st.tabs(tab_labels)
@@ -96,3 +98,6 @@ with tabs[10]:
 
 with tabs[11]:
     display_311_impact()
+
+with tabs[12]:
+    stats(df)
