@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import uuid
 
 def display_issues_over_time(df):
     # Get the selected time granularity from the radio buttons.
@@ -34,13 +35,7 @@ def select_time_granularity(default="Week"):
     return period_code, human_readable_time_unit
 
 def issues_created_by_time_period(df, period_code, human_readable_time_unit):
-    """
-    Displays a time series line chart of issues with a user-selected granularity.
-    The user can choose to view the data by Day, Week, Month, or Year using horizontal radio buttons.
-    Each point on the chart is labeled with the count of issues (rotated 90°) and offset from the point.
-    """
-    
-    # Convert 'created_at' to the chosen time period (using the start of that period).
+    # Convert 'created_at' to the chosen time period.
     df['time_period'] = df['created_at'].dt.to_period(period_code).apply(lambda r: r.start_time)
     
     # Count the number of issues per period.
@@ -59,7 +54,7 @@ def issues_created_by_time_period(df, period_code, human_readable_time_unit):
         markers=True
     )
     
-    # Create annotations for each point with rotated text (90°) and an offset (using yshift).
+    # Create annotations for each point.
     annotations = []
     for _, row in time_series_df.iterrows():
         annotations.append(
@@ -67,20 +62,20 @@ def issues_created_by_time_period(df, period_code, human_readable_time_unit):
                 x=row['Date'],
                 y=row['Number of Issues'],
                 text=str(row['Number of Issues']),
-                textangle=270,       # Rotate the text 90 degrees.
+                textangle=270,  # Rotate text 90°.
                 showarrow=False,
                 xanchor='center',
                 yanchor='bottom',
-                yshift=10         # Offset the text 10 pixels above the marker.
+                yshift=10     # Offset the text.
             )
         )
     
-    # Update layout to include the annotations and better axis titles.
     fig.update_layout(
         annotations=annotations,
         xaxis_title="Date",
         yaxis_title="Number of Issues"
     )
     
-    # Display the chart in Streamlit.
-    return st.plotly_chart(fig)
+    # Generate a truly unique key using uuid4.
+    unique_key = f"issues_chart_{period_code}_{human_readable_time_unit}_{uuid.uuid4()}"
+    return st.plotly_chart(fig, key=unique_key)

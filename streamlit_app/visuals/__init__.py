@@ -1,5 +1,6 @@
 from .issue_mapping import display_map
 from .issues_over_time import display_issues_over_time
+from .issues_over_time import issues_created_by_time_period
 from .issue_summary_chart import display_issue_summary
 from .aging_analysis import display_aging_analysis
 from .assignee_resolution_time import display_assignee_resolution_time
