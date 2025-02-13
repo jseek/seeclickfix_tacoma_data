@@ -290,7 +290,7 @@ def plot_summary_stacked_horizontal_bar_chart(df, col='summary'):
         color='Category',
         orientation='h',
         text='Percentage',
-        title='Summary Distribution This Week (100% Bar)'
+        title='Issue Distribution This Week'
     )
     
     # Update trace to display percentage text inside each segment.
