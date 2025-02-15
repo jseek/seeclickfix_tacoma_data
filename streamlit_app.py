@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit.components.v1 as components
 
 # Import data loaders
 from streamlit_app.data.load_issues import load_issues  
@@ -26,10 +27,11 @@ from streamlit_app.visuals import (
     stats,
 )
 
-GA_TRACKING_ID = "G-T8DYCYF3YN"  # Replace with your GA4 Measurement ID
 
-ga_script = f"""
-<!-- Google tag (gtag.js) -->
+GA_TRACKING_ID = "G-T8DYCYF3YN"
+
+html_code = f"""
+<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -78,8 +80,7 @@ tab_labels = [
 
 tabs = st.tabs(tab_labels)
 
-# Inject into the page
-st.markdown(f"<script>{ga_script}</script>", unsafe_allow_html=True)
+components.html(html_code, height=0)
 
 with tabs[0]:
     heads_up(filtered_df)
