@@ -39,9 +39,6 @@ gtag('config', '{GA_TRACKING_ID}');
 </script>
 """
 
-# Inject into the page
-st.markdown(f"<script>{ga_script}</script>", unsafe_allow_html=True)
-
 # Set up page configuration
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
 
@@ -80,6 +77,9 @@ tab_labels = [
 ]
 
 tabs = st.tabs(tab_labels)
+
+# Inject into the page
+st.markdown(f"<script>{ga_script}</script>", unsafe_allow_html=True)
 
 with tabs[0]:
     heads_up(filtered_df)
