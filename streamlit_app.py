@@ -26,6 +26,22 @@ from streamlit_app.visuals import (
     stats,
 )
 
+GA_TRACKING_ID = "G-T8DYCYF3YN"  # Replace with your GA4 Measurement ID
+
+ga_script = f"""
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){{dataLayer.push(arguments);}}
+gtag('js', new Date());
+gtag('config', '{GA_TRACKING_ID}');
+</script>
+"""
+
+# Inject into the page
+st.markdown(f"<script>{ga_script}</script>", unsafe_allow_html=True)
+
 # Set up page configuration
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
 
