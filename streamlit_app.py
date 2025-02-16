@@ -123,3 +123,21 @@ with tabs[12]:
 
 with tabs[13]:
     stats(df)
+
+    st.header("DataFrame Description")
+    
+    # Display column names
+    st.subheader("Column Names")
+    st.write(df.columns.tolist())
+    
+    # Display summary statistics (including non-numeric columns)
+    st.subheader("Summary Statistics")
+    st.write(df.describe(include='all'))
+    
+    # Display data types for each column
+    st.subheader("Data Types")
+    st.write(df.dtypes)
+    
+    # Optionally, display a sample of the data
+    st.subheader("Data Preview")
+    st.dataframe(df.head())
