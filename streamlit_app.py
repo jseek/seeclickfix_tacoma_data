@@ -122,7 +122,21 @@ with tabs[12]:
     display_311_impact()
 
 with tabs[13]:
-    stats(df)
+    # stats(df)
+
+    st.markdown(
+        """
+        This tool is built based on a GitHub repo that anyone can replicate.
+
+        https://github.com/jseek/seeclickfix_tacoma_data/
+
+        This package uses Airflow to pull data from Tacoma's 311 system, stores the data in a parquet file, and serves it through Streamlit for visuaization.
+
+
+        """,
+        unsafe_allow_html=True
+    )
+
 
     st.header("DataFrame Description")
     
