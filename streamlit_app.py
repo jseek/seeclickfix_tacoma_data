@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import streamlit.components.v1 as components
 
 # Import data loaders
 from streamlit_app.data.load_issues import load_issues  
@@ -26,20 +25,6 @@ from streamlit_app.visuals import (
     issue_data_table,
     stats,
 )
-
-
-GA_TRACKING_ID = "G-T8DYCYF3YN"
-
-html_code = f"""
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id={GA_TRACKING_ID}"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){{dataLayer.push(arguments);}}
-gtag('js', new Date());
-gtag('config', '{GA_TRACKING_ID}');
-</script>
-"""
 
 # Set up page configuration
 st.set_page_config(page_title="Tacoma 311 Issues Dashboard", layout="wide")
