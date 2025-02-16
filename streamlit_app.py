@@ -13,6 +13,7 @@ from streamlit_app.filters.filters import apply_filters
 from streamlit_app.visuals import (
     heads_up,
     display_map,
+    create_hotspots_map,
     council_districts,
     display_department_performance,
     display_issues_over_time,
@@ -93,6 +94,63 @@ with tabs[2]:
 
 with tabs[3]:
     display_map(filtered_df)
+
+    st.title("Emerging Hotspots Detection via Geospatial Clustering")
+
+    st.markdown(
+        """
+        This application uses DBSCAN clustering to identify emerging hotspots based on geospatial data.
+        
+        **How does it work?**
+        
+        - **Epsilon (eps):** Controls the maximum distance (in degrees) between two points for them to be considered part of the same cluster.
+            - **Lower values:** Only very close points are grouped together, leading to more, smaller clusters.
+            - **Higher values:** More distant points are grouped, resulting in larger clusters.
+        
+        - **Minimum Samples:** Sets the minimum number of points required to form a cluster.
+            - **Lower values:** More sensitive to small clusters.
+            - **Higher values:** Only groups areas with a higher density of points, filtering out noise.
+        
+        **Insights:**
+        
+        - **Hotspot Identification:** Adjusting these parameters helps highlight regions with a high density of points.
+        - **Data Sensitivity:** The way clusters form with different parameters can provide insights into the spatial distribution and density of your data.
+        - **Anomaly Detection:** Sparse or isolated points that do not form clusters might indicate outliers or anomalies.
+        """
+    )
+
+    # Place controls for DBSCAN parameters above the map (not in the sidebar)
+    eps = st.slider("Epsilon (in degrees)", 0.001, 0.05, 0.005, 0.001)
+    min_samples = st.slider("Minimum Samples", 1, 20, 5)
+
+    # Generate the hotspots map using the function
+    deck_chart, updated_df = create_hotspots_map(filtered_df, eps, min_samples)
+    if deck_chart is not None:
+        st.pydeck_chart(deck_chart)
+        if 'cluster' in updated_df.columns:
+            # Check if 'summary' column exists to show the top value per cluster
+            if 'summary' in updated_df.columns:
+                # Calculate cluster counts
+                cluster_counts = updated_df['cluster'].value_counts().reset_index()
+                cluster_counts.columns = ['cluster', 'count']
+                
+                # Calculate the top (most frequent) summary value for each cluster
+                cluster_top_summary = (
+                    updated_df.groupby('cluster')['summary']
+                    .agg(lambda x: x.value_counts().index[0])
+                    .reset_index()
+                )
+                cluster_top_summary.columns = ['cluster', 'top_summary']
+                
+                # Merge the two DataFrames to show both counts and top summary values
+                cluster_info = pd.merge(cluster_counts, cluster_top_summary, on='cluster', how='left')
+                st.write("Cluster Counts with Top Summary:", cluster_info)
+            else:
+                st.write("Cluster Counts:", updated_df['cluster'].value_counts())
+        else:
+            st.warning("The 'cluster' column was not found in the updated DataFrame.")
+    else:
+        st.error("Could not create hotspots map due to errors in the data.")
 
 with tabs[4]:
     council_districts(filtered_df)

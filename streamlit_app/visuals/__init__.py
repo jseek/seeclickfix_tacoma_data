@@ -1,4 +1,5 @@
 from .issue_mapping import display_map
+from .issue_mapping import create_hotspots_map
 from .issues_over_time import display_issues_over_time
 from .issues_over_time import issues_created_by_time_period
 from .issue_summary_chart import display_issue_summary

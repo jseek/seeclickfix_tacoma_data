@@ -45,6 +45,12 @@ This will:
 - Start **pgAdmin** on port `5059`  
 - Start **Streamlit Dashboard** on port `8501`  
 
+Note: You may need to install sklearn manually:
+```sh
+docker exec -it <container_id> bash
+pip install --no-cache-dir scikit-learn
+```
+
 ### **3. Access the Services**  
 | Service       | URL                                  | Credentials |
 |--------------|--------------------------------------|------------|
