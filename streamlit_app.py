@@ -65,8 +65,6 @@ tab_labels = [
 
 tabs = st.tabs(tab_labels)
 
-components.html(html_code, height=0)
-
 with tabs[0]:
     heads_up(filtered_df)
 
