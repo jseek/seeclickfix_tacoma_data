@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import timedelta
+from datetime import timedelta, date
 import plotly.express as px
 from streamlit_app.visuals import issues_created_by_time_period
 
@@ -11,22 +11,27 @@ def heads_up(filtered_df):
 
     # Determine the current date as the max date in the created_at_date column
     current_date = filtered_df['created_at_date'].max()
-    
+        
+    # Get the maximum created_at value from filtered_df and convert it to a date
+    max_created_at = filtered_df['created_at'].max()
+    current_date = max_created_at.date()
+
     # Define rolling 7-day periods:
     # Current period: from (current_date - 6 days) to current_date (inclusive)
     current_rolling_start = current_date - timedelta(days=6)
     # Previous period: from (current_date - 13 days) to (current_date - 7 days)
-    previous_rolling_start = current_date - timedelta(days=13)
+    previous_rolling_start = current_rolling_start - timedelta(days=7)
     previous_rolling_end = current_date - timedelta(days=7)
 
-    # Filter the DataFrame for created and resolved issues in each rolling period
+    # Filter the DataFrame for created and resolved issues in each rolling period,
+    # excluding the current date from the current period
     created_at_current_df = filtered_df[
         (filtered_df['created_at_date'] >= current_rolling_start) & 
-        (filtered_df['created_at_date'] <= current_date)
+        (filtered_df['created_at_date'] < current_date)
     ]
     resolved_at_current_df = filtered_df[
         (filtered_df['resolved_at_date'] >= current_rolling_start) & 
-        (filtered_df['resolved_at_date'] <= current_date)
+        (filtered_df['resolved_at_date'] < current_date)
     ]
     created_at_previous_df = filtered_df[
         (filtered_df['created_at_date'] >= previous_rolling_start) & 
