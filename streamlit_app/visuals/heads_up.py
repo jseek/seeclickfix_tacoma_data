@@ -73,7 +73,7 @@ def heads_up(filtered_df):
 
     st.write("---")
 
-    st.plotly_chart(plot_summary_stacked_horizontal_bar_chart(created_at_current_df))
+    st.plotly_chart(plot_summary_treemap(created_at_current_df))
 
 
 def created_card(this_df, previous_df, label_current="Current Period", label_previous="Previous Period"):
@@ -177,60 +177,89 @@ def plot_homeless_stacked_horizontal_bar_chart(df, col='homeless_related'):
     return fig
 
 
-def plot_summary_stacked_horizontal_bar_chart(df, col='summary'):
+def plot_summary_treemap(df, col='summary', threshold=5):
     """
-    Creates a single horizontal stacked bar chart representing 100% of the data,
-    partitioned by the percentage distribution of values in the specified summary column.
+    Creates a hierarchical treemap representing the distribution of values in the specified summary column.
+    Categories with a percentage below the threshold are grouped under an "Other" node.
+    When clicking "Other", the treemap expands to show the individual small categories.
     
     Parameters:
         df (pd.DataFrame): The DataFrame containing your data.
         col (str): The column to analyze. Default is 'summary'.
+        threshold (float): Percentage threshold below which categories are grouped under "Other". Default is 5%.
         
     Returns:
-        fig (plotly.graph_objects.Figure): A Plotly figure object with the stacked bar chart.
+        fig (plotly.graph_objects.Figure): A Plotly treemap figure.
     
     Usage:
-        fig = plot_summary_stacked_horizontal_bar_chart(your_dataframe)
+        fig = plot_summary_treemap(your_dataframe)
         st.plotly_chart(fig)
     """
-    # Count the unique values in the summary column.
+    import plotly.graph_objects as go
+    import pandas as pd
+
+    # Count the unique values and calculate percentages.
     counts = df[col].value_counts()
     total = counts.sum()
     percentages = (counts / total * 100).round(2)
-    
-    # Build a DataFrame for plotting.
-    # We use a dummy category ('All Records') so that all values are part of one bar.
-    plot_data = pd.DataFrame({
-        'Category': counts.index.astype(str),
-        'Count': counts.values,
-        'Percentage': percentages.values,
-        'Dummy': 'All Records'
-    })
-    
-    # Create a horizontal stacked bar chart.
-    fig = px.bar(
-        plot_data,
-        x='Percentage',
-        y='Dummy',
-        color='Category',
-        orientation='h',
-        text='Percentage',
-        title='Issue Distribution This Week'
-    )
-    
-    # Update trace to display percentage text inside each segment.
-    fig.update_traces(texttemplate='%{text}%', textposition='inside')
-    
-    # Update layout:
-    # - Set bar mode to 'stack'
-    # - Configure x-axis to range from 0 to 100 to represent 100%
-    # - Ensure the legend is displayed
-    fig.update_layout(
-        barmode='stack',
-        xaxis_title='Percentage',
-        yaxis_title='',
-        xaxis_range=[0, 100],
-        showlegend=True
-    )
+
+    # Separate significant and small categories.
+    significant = counts[percentages >= threshold]
+    small = counts[percentages < threshold]
+    significant_pct = percentages[percentages >= threshold]
+    small_pct = percentages[percentages < threshold]
+
+    # Build lists for the treemap hierarchy.
+    ids = []
+    labels = []
+    parents = []
+    values = []
+    percents = []  # To hold percentage of the whole for hover display.
+
+    # Root node.
+    ids.append("All Records")
+    labels.append("All Records")
+    parents.append("")
+    values.append(total)
+    percents.append(100)
+
+    # Add significant categories as direct children of the root.
+    for cat in significant.index:
+        ids.append(cat)
+        labels.append(cat)
+        parents.append("All Records")
+        values.append(significant[cat])
+        percents.append(significant_pct[cat])
+
+    # For small categories, create an aggregated "Other" node.
+    if not small.empty:
+        other_value = small.sum()
+        other_pct = small_pct.sum()
+        ids.append("Other")
+        labels.append("Other")
+        parents.append("All Records")
+        values.append(other_value)
+        percents.append(other_pct)
+        # Then add each small category as a child of "Other".
+        for cat in small.index:
+            # Create a unique id for each small category.
+            ids.append("Other_" + cat)
+            labels.append(cat)
+            parents.append("Other")
+            values.append(small[cat])
+            percents.append(small_pct[cat])
+
+    # Create the treemap figure using graph_objects.
+    fig = go.Figure(go.Treemap(
+        ids=ids,
+        labels=labels,
+        parents=parents,
+        values=values,
+        branchvalues="total",
+        # Use customdata to pass the percentage value and show it in the hover.
+        customdata=percents,
+        hovertemplate='<b>%{label}</b><br>Count: %{value}<br>Percentage of total: %{customdata:.2f}%<extra></extra>',
+    ))
+    fig.update_layout(title="Issue Distribution This Week")
     
     return fig
