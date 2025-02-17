@@ -1,194 +1,119 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import timedelta
 import plotly.express as px
-from streamlit_app.visuals import (
-    issues_created_by_time_period,
-)
-
+from streamlit_app.visuals import issues_created_by_time_period
 
 def heads_up(filtered_df):
-
-    filtered_df['created_at_date'] = pd.to_datetime(filtered_df['created_at'], errors='coerce').dt.date
+    # Convert string dates to date objects
     filtered_df['created_at_date'] = pd.to_datetime(filtered_df['created_at'], errors='coerce').dt.date
     filtered_df['resolved_at_date'] = pd.to_datetime(filtered_df['resolved_at'], errors='coerce').dt.date
 
+    # Determine the current date as the max date in the created_at_date column
     current_date = filtered_df['created_at_date'].max()
-    current_week_start = current_date - timedelta(days=current_date.weekday())
-    days_into_current_week = current_date - current_week_start
-    last_week_start = current_week_start - timedelta(days=7)
-    last_week_to_date = current_date - timedelta(days=7)
+    
+    # Define rolling 7-day periods:
+    # Current period: from (current_date - 6 days) to current_date (inclusive)
+    current_rolling_start = current_date - timedelta(days=6)
+    # Previous period: from (current_date - 13 days) to (current_date - 7 days)
+    previous_rolling_start = current_date - timedelta(days=13)
+    previous_rolling_end = current_date - timedelta(days=7)
 
-    created_at_week_filtered_df = filtered_df[(filtered_df['created_at_date'] >= current_week_start)]
-    resolved_at_week_filtered_df = filtered_df[(filtered_df['resolved_at_date'] >= current_week_start)]
-    created_at_last_week_filtered_df = filtered_df[(filtered_df['created_at_date'] >= last_week_start) & (filtered_df['created_at_date'] <= last_week_to_date)]
-    resolved_at_last_week_filtered_df = filtered_df[(filtered_df['resolved_at_date'] >= last_week_start) & (filtered_df['resolved_at_date'] <= last_week_to_date)]
-
-    # dates_card(current_date, current_week_start, last_week_start, last_week_to_date)
-
+    # Filter the DataFrame for created and resolved issues in each rolling period
+    created_at_current_df = filtered_df[
+        (filtered_df['created_at_date'] >= current_rolling_start) & 
+        (filtered_df['created_at_date'] <= current_date)
+    ]
+    resolved_at_current_df = filtered_df[
+        (filtered_df['resolved_at_date'] >= current_rolling_start) & 
+        (filtered_df['resolved_at_date'] <= current_date)
+    ]
+    created_at_previous_df = filtered_df[
+        (filtered_df['created_at_date'] >= previous_rolling_start) & 
+        (filtered_df['created_at_date'] <= previous_rolling_end)
+    ]
+    resolved_at_previous_df = filtered_df[
+        (filtered_df['resolved_at_date'] >= previous_rolling_start) & 
+        (filtered_df['resolved_at_date'] <= previous_rolling_end)
+    ]
+    
     value_column = 'summary'
-
-    st.markdown("**Created Last Week**")
-    created_card(created_at_week_filtered_df, created_at_last_week_filtered_df)
-    top_this_week_value = get_top_value(created_at_week_filtered_df, value_column)
-    st.write(f"*Top Issue This Week: {top_this_week_value} ({top_value_percent_of_whole(top_this_week_value, value_column, created_at_week_filtered_df)})*")
+    
+    st.markdown("**Created (Last 7 Days vs Previous 7 Days)**")
+    st.markdown(
+        f"Comparing dates: **Last 7 Days:** {current_rolling_start} to {current_date} | **Previous 7 Days:** {previous_rolling_start} to {previous_rolling_end}"
+    )
+    created_card(
+        created_at_current_df, 
+        created_at_previous_df, 
+        label_current="Issues Created (Last 7 Days)", 
+        label_previous="Issues Created (Previous 7 Days)"
+    )
+    top_current_value = get_top_value(created_at_current_df, value_column)
+    st.write(f"*Top Issue in Last 7 Days: {top_current_value} ({top_value_percent_of_whole(top_current_value, value_column, created_at_current_df)})*")
+    
     st.write("---")
-    st.markdown("**Resolved Last Week**")
-    resolved_card(resolved_at_week_filtered_df, resolved_at_last_week_filtered_df)
-    top_last_week_value = get_top_value(resolved_at_week_filtered_df, value_column)
-    st.write(f"*Top Issue Last Week: {top_last_week_value} ({top_value_percent_of_whole(top_last_week_value, value_column, resolved_at_week_filtered_df)})*")
+    
+    st.markdown("**Resolved (Last 7 Days vs Previous 7 Days)**")
+    st.markdown(
+        f"Comparing dates: **Last 7 Days:** {current_rolling_start} to {current_date} | **Previous 7 Days:** {previous_rolling_start} to {previous_rolling_end}"
+    )
+    resolved_card(
+        resolved_at_current_df, 
+        resolved_at_previous_df, 
+        label_current="Issues Resolved (Last 7 Days)", 
+        label_previous="Issues Resolved (Previous 7 Days)"
+    )
+    top_resolved_value = get_top_value(resolved_at_current_df, value_column)
+    st.write(f"*Top Issue Resolved in Last 7 Days: {top_resolved_value} ({top_value_percent_of_whole(top_resolved_value, value_column, resolved_at_current_df)})*")
     
     st.write("---")
 
-    issues_created_by_time_period(filtered_df, "W", "Week")
+    st.plotly_chart(plot_homeless_stacked_horizontal_bar_chart(created_at_current_df))
 
     st.write("---")
 
-    st.plotly_chart(plot_homeless_stacked_horizontal_bar_chart(created_at_week_filtered_df))
-
-    st.write("---")
-
-    st.plotly_chart(plot_summary_stacked_horizontal_bar_chart(created_at_week_filtered_df))
+    st.plotly_chart(plot_summary_stacked_horizontal_bar_chart(created_at_current_df))
 
 
-def dates_card(current_date, current_week_start, last_week_start, last_week_to_date):
-    dates_col1, dates_col2, dates_col3, dates_col4 = st.columns(4)
-    with dates_col1:
-        st.markdown("<p style='text-align: center;'>Max Data Date</p>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center;'>{current_date}</p>", unsafe_allow_html=True)
-    with dates_col2:
-        st.markdown("<p style='text-align: center;'>Week Start Date</p>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center;'>{current_week_start}</p>", unsafe_allow_html=True)
-    with dates_col3:
-        st.markdown("<p style='text-align: center;'>Last Week Start Date</p>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center;'>{last_week_start}</p>", unsafe_allow_html=True)
-    with dates_col4:
-        st.markdown("<p style='text-align: center;'>Last Week To Date</p>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center;'>{last_week_to_date}</p>", unsafe_allow_html=True)
+def created_card(this_df, previous_df, label_current="Current Period", label_previous="Previous Period"):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        card_metric(this_df, label_current)
+    with col2:
+        card_metric(previous_df, label_previous)
+    with col3:
+        card_delta_percent(this_df, previous_df, "Created")
 
+def resolved_card(this_df, previous_df, label_current="Current Period", label_previous="Previous Period"):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        card_metric(this_df, label_current)
+    with col2:
+        card_metric(previous_df, label_previous)
+    with col3:
+        card_delta_percent(this_df, previous_df, "Resolved")
 
-def created_card(this_week_df, last_week_df):
-    created_col1, created_col2, created_col3 = st.columns(3)
-    with created_col1:
-            card_issues_created_this_week(this_week_df)
-    with created_col2:
-            card_issues_created_last_week(last_week_df)
-    with created_col3:
-            card_delta_percent_created(this_week_df, last_week_df)
+def card_metric(df, label):
+    count = df.shape[0]
+    st.metric(label=label, value=count)
 
-
-def resolved_card(this_week_df, last_week_df):
-    resolved_col1, resolved_col2, resolved_col3 = st.columns(3)
-    with resolved_col1:
-            card_issues_resolved_this_week(this_week_df)
-    with resolved_col2:
-            card_issues_resolved_last_week(last_week_df)
-    with resolved_col3:
-            card_delta_percent_resolved(this_week_df, last_week_df)
-
-
-def card_issues_created_this_week(this_week_df):
-    """
-    Displays a metric card with the count of issues created this week
-    (from Monday up to the provided current_week_start).
-    """
-    
-    # Filter issues created from week_start up to current_week_start
-    count = this_week_df.shape[0]
-    
-    st.metric(label="Issues Created This Week", value=count)
-
-
-def card_issues_created_last_week(last_week_df):
-    """
-    Displays a metric card with the count of issues created last week
-    (from last week’s Monday up to the same day-of-week as current_week_start).
-    """
-    count = last_week_df.shape[0]
-
-
-    st.metric(label="Issues Created Last Week", value=count)
-    st.caption("Calculated as: Issues Created Last Week (To Current Weekday, for comparison of WTD)")
-
-
-def card_delta_percent_created(this_week_df, last_week_df):
-    current_week_count = this_week_df.shape[0]
-    last_week_count = last_week_df.shape[0]
-    
-    if last_week_count == 0:
+def card_delta_percent(current_df, previous_df, action):
+    current_count = current_df.shape[0]
+    previous_count = previous_df.shape[0]
+    if previous_count == 0:
         delta_str = "N/A"
     else:
-        delta = ((current_week_count - last_week_count) / last_week_count) * 100
-        if delta > 0:
-            delta_str = f"{delta:.2f}% ↑"
-        else:
-            delta_str = f"{delta:.2f}% ↓"
-    
-    st.metric(label="Delta % (Created: This Week vs Last Week)", value=delta_str)
-
-
-def card_issues_resolved_this_week(this_week_df):
-    """
-    Displays a metric card with the count of issues created this week
-    (from Monday up to the provided current_week_start).
-    """
-    
-    # Filter issues created from week_start up to current_week_start
-    count = this_week_df.shape[0]
-    
-    st.metric(label="Issues Resolved This Week", value=count)
-
-
-def card_issues_resolved_last_week(last_week_df):
-    """
-    Displays a metric card with the count of issues created last week
-    (from last week’s Monday up to the same day-of-week as current_week_start).
-    """
-    count = last_week_df.shape[0]
-    
-    st.metric(label="Issues Resolved Last Week", value=count)
-    st.caption("Calculated as: Issues Resolved Last Week (To Current Weekday, for comparison of WTD)")
-
-
-def card_delta_percent_resolved(this_week_df, last_week_df):
-    current_week_count = this_week_df.shape[0]
-    last_week_count = last_week_df.shape[0]
-    
-    if last_week_count == 0:
-        delta_str = "N/A"
-    else:
-        delta = ((current_week_count - last_week_count) / last_week_count) * 100
-        if delta > 0:
-            delta_str = f"{delta:.2f}% ↑"
-        else:
-            delta_str = f"{delta:.2f}% ↓"
-    
-    st.metric(label="Delta % (Resolved: This Week vs Last Week)", value=delta_str)
-
+        delta = ((current_count - previous_count) / previous_count) * 100
+        delta_str = f"{delta:.2f}% {'↑' if delta > 0 else '↓'}"
+    st.metric(label=f"Delta % ({action}: Current vs Previous)", value=delta_str)
 
 def get_top_value(df: pd.DataFrame, column: str = "summary") -> str:
-    """
-    Returns the most frequently occurring value in the specified column of a DataFrame.
-
-    :param df: The input DataFrame.
-    :param column: The column name to analyze (default is "summary").
-    :return: The most frequent summary value.
-    """
     if column not in df.columns:
         raise ValueError(f"Column '{column}' not found in DataFrame.")
-
-    top_value = df[column].value_counts().idxmax()
-    return top_value
+    return df[column].value_counts().idxmax()
 
 def top_value_percent_of_whole(value, value_column, df):
-    """
-    Returns the percentage of the total count that the specified value represents.
-
-    :param value: The value to calculate the percentage for.
-    :param value_column: The column name to analyze.
-    :param df: The input DataFrame.
-    :return: The percentage of the total count that the specified value represents.
-    """
     total_count = df[value_column].count()
     value_count = df[df[value_column] == value][value_column].count()
     return f"{value_count:,}, {(value_count / total_count) * 100:.2f}%"
