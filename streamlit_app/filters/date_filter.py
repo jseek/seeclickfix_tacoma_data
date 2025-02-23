@@ -1,4 +1,3 @@
-# filters/date_filter.py
 import streamlit as st
 from datetime import datetime, timedelta
 
@@ -11,6 +10,9 @@ def apply_date_filter(df):
         - Current Month: 1st of the month to today.
         - Current Year: January 1st to today.
         - Past Two Calendar Years: January 1 of last year to today.
+        - Previous 7 Days: From 7 days ago to today.
+        - Previous 30 Days: From 30 days ago to today.
+        - Rolling 1 Year: From 1 year ago to today.
         - Custom: User selects a range via a slider.
     """
     # Determine the dataset's date boundaries.
@@ -28,16 +30,18 @@ def apply_date_filter(df):
         "Current Month",
         "Current Year",
         "Past Two Calendar Years",
+        "Previous 7 Days",
+        "Previous 30 Days",
+        "Rolling 1 Year",
         "Custom"
     ]
     
     # Default to "Past Two Calendar Years" (index 3)
-    selected_option = st.radio("Select Date Range", quick_options, index=3)
+    selected_option = st.radio("Select Date Range", quick_options, index=5)
     
     if selected_option == "Current Week":
         # Compute Monday of the current week.
         start_date = today - timedelta(days=today.weekday())
-        # Ensure start_date isn’t before the dataset’s minimum.
         start_date = max(start_date, dataset_min_date)
         end_date = today
         
@@ -56,6 +60,21 @@ def apply_date_filter(df):
     elif selected_option == "Past Two Calendar Years":
         # For example, if today is in 2025, this sets the range from Jan 1, 2024 to today.
         start_date = today.replace(year=today.year - 1, month=1, day=1)
+        start_date = max(start_date, dataset_min_date)
+        end_date = today
+        
+    elif selected_option == "Previous 7 Days":
+        start_date = today - timedelta(days=7)
+        start_date = max(start_date, dataset_min_date)
+        end_date = today
+        
+    elif selected_option == "Previous 30 Days":
+        start_date = today - timedelta(days=30)
+        start_date = max(start_date, dataset_min_date)
+        end_date = today
+        
+    elif selected_option == "Rolling 1 Year":
+        start_date = today - timedelta(days=365)
         start_date = max(start_date, dataset_min_date)
         end_date = today
         
