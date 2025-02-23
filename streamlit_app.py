@@ -43,7 +43,7 @@ st.title("Tacoma 311 Issues Dashboard")
 
 with st.sidebar:
     st.header("Filters")
-    filtered_df = apply_filters(df)
+    filtered_df, non_date_filtered_df = apply_filters(df)
 
 # Define the tab labels
 tab_labels = [
@@ -66,7 +66,7 @@ tab_labels = [
 tabs = st.tabs(tab_labels)
 
 with tabs[0]:
-    heads_up(filtered_df)
+    heads_up(non_date_filtered_df)
 
 with tabs[1]:
     display_issues_over_time(filtered_df)
