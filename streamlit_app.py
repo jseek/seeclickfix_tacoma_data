@@ -21,6 +21,7 @@ from streamlit_app.visuals import (
     display_assignee_performance,
     display_equity_issues_analysis,
     display_equity_map,
+    display_equity_scatterplot,
     display_311_impact,
     issue_data_table,
     stats,
@@ -97,6 +98,7 @@ with tabs[9]:
 
 with tabs[10]:
     display_equity_map(filtered_df)
+    # display_equity_scatterplot(filtered_df)
 
 with tabs[11]:
     issue_data_table(filtered_df)

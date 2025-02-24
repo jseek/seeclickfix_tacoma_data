@@ -9,6 +9,7 @@ from .department_performance import display_department_performance
 from .council_district_review import council_districts
 from .equity_issues_analysis import display_equity_issues_analysis
 from .equity_map import display_equity_map
+from .equity_map import display_equity_scatterplot
 from .about_311_impact import display_311_impact
 from .issue_data_table import issue_data_table
 from .data_stats import stats
